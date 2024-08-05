@@ -1,33 +1,39 @@
+/* static/css/style.css */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
     background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    margin: 0;
 }
 
 .container {
-    background: white;
-    padding: 20px;
+    background: #ffffff;
+    padding: 20px 30px;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 300px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+    text-align: center;
 }
 
 h1 {
-    text-align: center;
     margin-bottom: 20px;
+    color: #333;
 }
 
 form div {
     margin-bottom: 15px;
+    text-align: left;
 }
 
 label {
     display: block;
     margin-bottom: 5px;
+    color: #555;
 }
 
 input[type="file"] {
@@ -38,13 +44,13 @@ input[type="file"] {
 }
 
 button {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
+    background-color: #007BFF;
+    color: #fff;
+    padding: 10px 20px;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    font-size: 16px;
 }
 
 button:hover {
@@ -52,13 +58,18 @@ button:hover {
 }
 
 ul {
-    list-style: none;
+    list-style-type: none;
     padding: 0;
 }
 
 li {
-    padding: 10px;
-    background: #f9f9f9;
-    border-left: 5px solid #007bff;
-    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+li.success {
+    color: green;
+}
+
+li.error {
+    color: red;
 }

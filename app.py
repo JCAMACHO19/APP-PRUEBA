@@ -1,47 +1,69 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-import shutil
-import os
+import streamlit as st
 import subprocess
 import sys
+import os
+import time
 
-app = Flask(__name__)
-app.secret_key = 'secret_key'
-
+# Configurar la carpeta de subida
 UPLOAD_FOLDER = 'C:/Users/jcamacho/Desktop/PRUEBA IMPORTE DE DOCUMENTOS'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+# Título de la aplicación
+st.title('Subida y Procesamiento de Archivos')
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
-    if 'dian_file' not in request.files or 'sinco_file' not in request.files or 'cuentas_file' not in request.files:
-        flash('Todos los archivos deben ser seleccionados', 'error')
-        return redirect(url_for('index'))
+# Subida de archivos
+st.write("Selecciona los archivos DIAN, SINCO y MovDocCuenta_CSV")
 
-    dian_file = request.files['dian_file']
-    sinco_file = request.files['sinco_file']
-    cuentas_file = request.files['cuentas_file']
+dian_file = st.file_uploader("Sube el archivo DIAN.xlsx", type="xlsx", key='dian')
+sinco_file = st.file_uploader("Sube el archivo SINCO.xlsx", type="xlsx", key='sinco')
+cuentas_file = st.file_uploader("Sube el archivo MovDocCuenta_CSV.csv", type="csv", key='cuentas')
 
+if st.button('Procesar Archivos'):
     if dian_file and sinco_file and cuentas_file:
         dian_path = os.path.join(UPLOAD_FOLDER, 'DIAN.xlsx')
         sinco_path = os.path.join(UPLOAD_FOLDER, 'SINCO.xlsx')
         cuentas_path = os.path.join(UPLOAD_FOLDER, 'MovDocCuenta_CSV.csv')
 
-        dian_file.save(dian_path)
-        sinco_file.save(sinco_path)
-        cuentas_file.save(cuentas_path)
+        with open(dian_path, 'wb') as f:
+            f.write(dian_file.getbuffer())
+        with open(sinco_path, 'wb') as f:
+            f.write(sinco_file.getbuffer())
+        with open(cuentas_path, 'wb') as f:
+            f.write(cuentas_file.getbuffer())
+
+        # Crear la barra de progreso
+        progress_bar = st.progress(0)
 
         try:
-            result = subprocess.run([sys.executable, os.path.join(UPLOAD_FOLDER, 'ejecutar.py'), dian_path, sinco_path, cuentas_path], check=True, capture_output=True, text=True)
-            flash('El script se ejecutó con éxito', 'success')
-            print(result.stdout)
-        except subprocess.CalledProcessError as e:
-            flash(f'Error al ejecutar el script: {e.stderr}', 'error')
-            print(e.stderr)
+            # Inicia el script en un subproceso
+            process = subprocess.Popen([sys.executable, os.path.join(UPLOAD_FOLDER, 'ejecutar.py'), dian_path, sinco_path, cuentas_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-    return redirect(url_for('index'))
+            # Lee el progreso desde el archivo
+            while True:
+                time.sleep(1)  # Espera un momento antes de verificar el archivo de progreso
+                if process.poll() is not None:
+                    break  # Sal del bucle si el proceso ha terminado
+                try:
+                    with open(os.path.join(UPLOAD_FOLDER, 'progreso.txt'), 'r') as f:
+                        progress = f.read().strip()
+                        if progress:
+                            progress_bar.progress(int(float(progress)))
+                except FileNotFoundError:
+                    pass
 
-if __name__ == '__main__':
-    app.run(debug=True)
+            # Verificar la salida del proceso
+            stdout, stderr = process.communicate()
+            if process.returncode == 0:
+                st.success('El script se ejecutó con éxito')
+                st.text(stdout)
+            else:
+                st.error(f'Error al ejecutar el script: {stderr}')
+                st.text(stderr)
+        except Exception as e:
+            st.error(f'Error al ejecutar el script: {str(e)}')
+    else:
+        st.error('Todos los archivos deben ser seleccionados')
+
+# Para ejecutar la aplicación, usa el siguiente comando en tu terminal:
+# streamlit run app.py
+
