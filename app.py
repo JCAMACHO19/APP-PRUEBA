@@ -4,19 +4,44 @@ import sys
 import os
 import time
 
+# Configurar el tamaño de la página
+st.set_page_config(
+    page_title="MasterAccounting",
+    page_icon=":bar_chart:",
+    layout="wide",  # Cambiar a "wide" para más ancho
+    initial_sidebar_state="expanded"
+)
+
 # Configurar la carpeta de subida
 UPLOAD_FOLDER = 'C:/Users/jcamacho/Desktop/PRUEBA IMPORTE DE DOCUMENTOS'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Título de la aplicación
-st.title('Subida y Procesamiento de Archivos')
+st.markdown("# MasterAccounting")
 
-# Subida de archivos
-st.write("Selecciona los archivos DIAN, SINCO y MovDocCuenta_CSV")
+# Descripción
+st.markdown("## Garantiza la integración completa de tus facturas electrónicas en tu sistema contable.")
+st.markdown("La aplicación verifica las facturas registradas, descarga automáticamente las que faltan y las procesa para su correcta incorporación en tu contabilidad.")
 
-dian_file = st.file_uploader("Sube el archivo DIAN.xlsx", type="xlsx", key='dian')
-sinco_file = st.file_uploader("Sube el archivo SINCO.xlsx", type="xlsx", key='sinco')
-cuentas_file = st.file_uploader("Sube el archivo MovDocCuenta_CSV.csv", type="csv", key='cuentas')
+# Subida de archivos con especificaciones
+st.markdown("### Subida de Archivos")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    dian_file = st.file_uploader("Sube el archivo DIAN.xlsx", type="xlsx", key='dian')
+    st.markdown("- **Nombre esperado:** DIAN.xlsx")
+    st.markdown("- **Especificación:** Reporte Dian de Documentos Recibidos")
+
+with col2:
+    sinco_file = st.file_uploader("Sube el archivo SINCO.xlsx", type="xlsx", key='sinco')
+    st.markdown("- **Nombre esperado:** SINCO.xlsx")
+    st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Seleccionando Concepto y Doc del tercero")
+
+with col3:
+    cuentas_file = st.file_uploader("Sube el archivo MovDocCuenta_CSV.csv", type="csv", key='cuentas')
+    st.markdown("- **Nombre esperado:** MovDocCuenta_CSV.csv")
+    st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Histórico cuentas Costo y Gasto")
 
 if st.button('Procesar Archivos'):
     if dian_file and sinco_file and cuentas_file:
@@ -66,4 +91,3 @@ if st.button('Procesar Archivos'):
 
 # Para ejecutar la aplicación, usa el siguiente comando en tu terminal:
 # streamlit run app.py
-
