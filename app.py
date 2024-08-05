@@ -35,7 +35,7 @@ def upload_file():
 
         try:
             result = subprocess.run([sys.executable, os.path.join(UPLOAD_FOLDER, 'ejecutar.py'), dian_path, sinco_path, cuentas_path], check=True, capture_output=True, text=True)
-            flash('El script se ejecutó con éxito', 'success')
+            flash('El script se ejecutó con éxito', 'successsss')
             print(result.stdout)
         except subprocess.CalledProcessError as e:
             flash(f'Error al ejecutar el script: {e.stderr}', 'error')
