@@ -17,7 +17,7 @@ UPLOAD_FOLDER = 'C:/Users/jcamacho/Desktop/PRUEBA IMPORTE DE DOCUMENTOS'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Título de la aplicación
-st.markdown("# MasterAccounting")
+st.markdown("# MastersAccounting ")
 
 # Descripción
 st.markdown("## Garantiza la integración completa de tus facturas electrónicas en tu sistema contable.")
