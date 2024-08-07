@@ -1,14 +1,16 @@
 import pandas as pd
 import os
 
+UPLOAD_FOLDER =  os.path.abspath("")
+
 # Ruta del archivo CSV
-file_path_csv = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS\MovDocCuenta_CSV.csv'
+file_path_csv = os.path.join(UPLOAD_FOLDER,"archivos_usuarios","MovDocCuenta_CSV.csv")
 
 # Leer el archivo CSV, omitiendo las primeras 7 filas
 df = pd.read_csv(file_path_csv, skiprows=7, encoding='latin1', dtype={'Centro Costos': str, 'Cuenta Contable': str})
 
 # Ruta del archivo Excel de salida
-excel_path = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS\MovDocCuenta_Excel.xlsx'
+excel_path = os.path.join(UPLOAD_FOLDER,"archivos_usuarios","MovDocCuenta_Excel.xlsx")
 
 # Eliminar archivo Excel si ya existe
 if os.path.exists(excel_path):
@@ -63,7 +65,7 @@ def calcular_iva(cuenta):
 df['IVA'] = df['Cuenta Contable Moda'].apply(calcular_iva)
 
 # Guardar el resultado en un nuevo archivo Excel
-output_file_path = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS\Cuenta_contable.xlsx'
+output_file_path = os.path.join(UPLOAD_FOLDER,"archivos_usuarios","Cuenta_contable.xlsx")
 df.to_excel(output_file_path, index=False)
 
 # Eliminar archivos temporales

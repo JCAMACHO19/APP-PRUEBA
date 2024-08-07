@@ -1,7 +1,10 @@
 import pandas as pd
+import os
+
+UPLOAD_FOLDER =  os.path.abspath("")
 
 # Ruta del archivo de entrada
-ruta_archivo = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS\archivo final.xlsx'
+ruta_archivo = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", "archivo final.xlsx")
 
 # Cargar el archivo Excel
 df = pd.read_excel(ruta_archivo)

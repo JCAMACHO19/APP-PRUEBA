@@ -5,8 +5,10 @@ import xlwt
 from xlutils.copy import copy
 import fitz  # PyMuPDF
 
+UPLOAD_FOLDER =  os.path.abspath("")
+
 # Ruta de la carpeta donde se encuentran los archivos
-folder_path = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS'
+folder_path =  os.path.join(UPLOAD_FOLDER,"archivos_usuarios")
 
 # Ruta del archivo zip que se va a crear
 zip_file_path = os.path.join(folder_path, 'archivos_comprimidos.zip')

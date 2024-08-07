@@ -9,10 +9,12 @@ def cargar_archivo(ruta):
         return ruta
     raise ValueError(f"No se ha encontrado el archivo en la ruta especificada: {ruta}")
 
+UPLOAD_FOLDER =  os.path.abspath("")
+
 # Definir las rutas de los archivos
-ruta_archivo_dian = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS\DIAN.xlsx'
-ruta_archivo_sinco = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS\SINCO.xlsx'
-ruta_archivo_salida = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS\archivo final.xlsx'
+ruta_archivo_dian = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'DIAN.xlsx')
+ruta_archivo_sinco = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'SINCO.xlsx')
+ruta_archivo_salida = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'MovDocCuenta_CSV.csv')
 
 # Procesar el archivo DIAN
 df_dian = pd.read_excel(cargar_archivo(ruta_archivo_dian))

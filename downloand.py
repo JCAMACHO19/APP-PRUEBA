@@ -72,9 +72,11 @@ def configurar_descargas(carpeta_descargas):
         logging.error(f'Error al configurar el navegador: {e}')
         return None
 
+UPLOAD_FOLDER =  os.path.abspath("")
+
 # Ejemplo de uso
-archivo_excel = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS\archivo final.xlsx'
-carpeta_descargas = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS'
+archivo_excel = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", "archivo final.xlsx")
+carpeta_descargas = os.path.join(UPLOAD_FOLDER,"archivos_usuarios")
 
 # Leer los CUFEs desde el archivo Excel
 cufes = leer_cufes_desde_excel(archivo_excel)

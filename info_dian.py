@@ -107,8 +107,10 @@ def extraer_ref_factura(texto):
         return segunda_aparicion.group(1).strip()
     return None
 
+UPLOAD_FOLDER =  os.path.abspath("")
+
 # Ruta donde se encuentra la carpeta PRUEBA IMPORTE DE DOCUMENTOS
-directorio = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS'
+directorio = os.path.join(UPLOAD_FOLDER,"archivos_usuarios")
 
 # Obtener todos los archivos PDF en la carpeta PRUEBA IMPORTE DE DOCUMENTOS
 archivos_pdf = [os.path.join(directorio, archivo) for archivo in os.listdir(directorio) if archivo.endswith('.pdf')]

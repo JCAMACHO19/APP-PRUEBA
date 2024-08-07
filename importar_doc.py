@@ -3,11 +3,14 @@ import xlwt
 from xlrd import open_workbook
 from xlutils.copy import copy
 import re
+import os
+
+UPLOAD_FOLDER =  os.path.abspath("")
 
 # Define las rutas de los archivos
-file_path_importar = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS\doc_importar.xls'
-file_path_datos = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS\datos_facturas.xlsx'
-file_path_cuenta_contable = r'C:\Users\jcamacho\Desktop\PRUEBA IMPORTE DE DOCUMENTOS\Cuenta_contable.xlsx'
+file_path_importar = os.path.join(UPLOAD_FOLDER,"archivos_usuarios","doc_importar.xls")
+file_path_datos = os.path.join(UPLOAD_FOLDER,"archivos_usuarios","datos_facturas.xlsx")
+file_path_cuenta_contable = os.path.join(UPLOAD_FOLDER,"archivos_usuarios","Cuenta_contable.xlsx")
 
 # Lee los archivos Excel con los datos a rellenar
 df_datos = pd.read_excel(file_path_datos)

@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # Configurar la carpeta de subida
-UPLOAD_FOLDER = 'C:/Users/jcamacho/Desktop/PRUEBA IMPORTE DE DOCUMENTOS'
+UPLOAD_FOLDER =  os.path.abspath("")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Título de la aplicación
@@ -45,9 +45,9 @@ with col3:
 
 if st.button('Procesar Archivos'):
     if dian_file and sinco_file and cuentas_file:
-        dian_path = os.path.join(UPLOAD_FOLDER, 'DIAN.xlsx')
-        sinco_path = os.path.join(UPLOAD_FOLDER, 'SINCO.xlsx')
-        cuentas_path = os.path.join(UPLOAD_FOLDER, 'MovDocCuenta_CSV.csv')
+        dian_path = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'DIAN.xlsx')
+        sinco_path = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'SINCO.xlsx')
+        cuentas_path = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'MovDocCuenta_CSV.csv')
 
         with open(dian_path, 'wb') as f:
             f.write(dian_file.getbuffer())

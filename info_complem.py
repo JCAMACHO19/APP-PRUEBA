@@ -1,9 +1,12 @@
 import xlrd
 import xlwt
 from xlutils.copy import copy
+import os
+
+UPLOAD_FOLDER =  os.path.abspath("")
 
 # Ruta del archivo
-file_path = 'C:\\Users\\jcamacho\\Desktop\\PRUEBA IMPORTE DE DOCUMENTOS\\doc_importar.xls'
+file_path = os.path.join(UPLOAD_FOLDER,"archivos_usuarios","doc_importar.xls")
 
 # Abrir el archivo Excel
 workbook = xlrd.open_workbook(file_path, formatting_info=True)
