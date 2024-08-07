@@ -6,7 +6,7 @@ import time
 
 # Configurar el tamaño de la página
 st.set_page_config(
-    page_title="MasterAccounting",
+    page_title="MastersAccounting",
     page_icon=":bar_chart:",
     layout="wide",  # Cambiar a "wide" para más ancho
     initial_sidebar_state="expanded"
@@ -17,7 +17,7 @@ UPLOAD_FOLDER =  os.path.abspath("")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Título de la aplicación
-st.markdown("# MasterAccounting")
+st.markdown("# MastersAccounting ")
 
 # Descripción
 st.markdown("## Garantiza la integración completa de tus facturas electrónicas en tu sistema contable.")
