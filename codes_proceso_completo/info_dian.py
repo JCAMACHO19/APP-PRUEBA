@@ -3,6 +3,7 @@ import fitz  # PyMuPDF
 import PyPDF2
 import pandas as pd
 import re
+from concurrent.futures import ThreadPoolExecutor
 
 def buscar_variables(documento):
     """Función para buscar las variables en el texto extraído del documento PDF"""
@@ -50,6 +51,17 @@ def buscar_variables(documento):
                     
                     variables[variable] = valor
 
+        # Ajuste para identificar "IVA" solo si está entre "Total Bruto Factura" y "INC"
+        if variables["Total Bruto Factura"] and variables["INC"]:
+            bruto_index = texto.find("Total Bruto Factura")
+            inc_index = texto.find("INC")
+            iva_index = texto.find("IVA", bruto_index, inc_index)
+            
+            if iva_index != -1:
+                start_index = texto.find('\n', iva_index) + 1
+                end_index = texto.find('\n', start_index)
+                variables["IVA"] = texto[start_index:end_index].strip().split()[-1]
+
     return variables
 
 def convertir_a_numero(valor):
@@ -96,7 +108,6 @@ def extraer_tipo_documento(texto):
     else:
         return "Tipo Desconocido"
 
-
 def extraer_ref_factura(texto):
     """Función para extraer la referencia de factura que sigue a la segunda aparición de 'Factura Electrónica'"""
     # Encontrar todas las apariciones de "Factura Electrónica"
@@ -107,22 +118,42 @@ def extraer_ref_factura(texto):
         return segunda_aparicion.group(1).strip()
     return None
 
-UPLOAD_FOLDER =  os.path.abspath("")
+def ajustar_total_bruto_factura(df):
+    """Ajusta 'Total Bruto Factura' para que se cumpla la ecuación:
+    Total Bruto Factura + IVA + INC = Total factura (=)"""
 
-# Ruta donde se encuentra la carpeta PRUEBA IMPORTE DE DOCUMENTOS
-directorio = os.path.join(UPLOAD_FOLDER,"archivos_usuarios")
+    # Crear una lista para almacenar mensajes de ajuste
+    mensajes_ajuste = []
 
-# Obtener todos los archivos PDF en la carpeta PRUEBA IMPORTE DE DOCUMENTOS
-archivos_pdf = [os.path.join(directorio, archivo) for archivo in os.listdir(directorio) if archivo.endswith('.pdf')]
+    for index, row in df.iterrows():
+        total_bruto = row['Total Bruto Factura']
+        iva = row['IVA']
+        inc = row['INC']
+        total_factura = row['Total factura (=)']
 
-# Lista para almacenar los datos extraídos de cada PDF
-datos = []
-descripciones = []
-tipos_documentos = []
-referencias_factura = []
+        # Calcular la suma de Total Bruto Factura + IVA + INC
+        suma = total_bruto + iva + inc
 
-# Procesar cada archivo PDF encontrado
-for ruta_pdf in archivos_pdf:
+        # Verificar si hay una diferencia
+        diferencia = total_factura - suma
+
+        if diferencia != 0:
+            # Ajustar la diferencia al valor de Total Bruto Factura
+            nuevo_total_bruto = total_bruto + diferencia
+            # Asegurar que Total Bruto Factura no sea negativo
+            if nuevo_total_bruto < 0:
+                nuevo_total_bruto = 0
+            df.at[index, 'Total Bruto Factura'] = nuevo_total_bruto
+            # Añadir mensaje de ajuste
+            mensajes_ajuste.append(f"Ajustado: diferencia de {diferencia}")
+        else:
+            mensajes_ajuste.append("Sin ajuste")
+
+    # Añadir la columna de mensajes de ajuste al DataFrame
+    df['Mensaje Ajuste'] = mensajes_ajuste
+
+def procesar_pdf(ruta_pdf):
+    """Función para procesar un solo PDF y devolver los datos extraídos"""
     # Abrir el archivo PDF
     documento = fitz.open(ruta_pdf)
 
@@ -138,18 +169,35 @@ for ruta_pdf in archivos_pdf:
     tipo_documento = extraer_tipo_documento(texto)
     ref_factura = extraer_ref_factura(texto) if tipo_documento == "Nota Crédito" else ""
 
-    # Añadir la descripción y otras informaciones a las listas
-    descripciones.append(descripcion)
-    tipos_documentos.append(tipo_documento)
-    referencias_factura.append(ref_factura)
-
     # Convertir valores numéricos
     for key in ["Nit del Emisor:", "Total Bruto Factura", "Total neto factura (=)", "Total factura (=)", "IVA", "INC", "Rete fuente"]:
         if variables_encontradas.get(key) is not None:
             variables_encontradas[key] = convertir_a_numero(variables_encontradas[key])
 
-    # Añadir los datos extraídos a la lista
+    return variables_encontradas, descripcion, tipo_documento, ref_factura
+
+# Ruta donde se encuentra la carpeta PRUEBA IMPORTE DE DOCUMENTOS
+directorio = os.path.join(os.path.abspath(""), "archivos_usuarios")
+
+# Obtener todos los archivos PDF en la carpeta PRUEBA IMPORTE DE DOCUMENTOS
+archivos_pdf = [os.path.join(directorio, archivo) for archivo in os.listdir(directorio) if archivo.endswith('.pdf')]
+
+# Lista para almacenar los datos extraídos de cada PDF
+datos = []
+descripciones = []
+tipos_documentos = []
+referencias_factura = []
+
+# Ejecutar la extracción de información en paralelo
+with ThreadPoolExecutor() as executor:
+    resultados = executor.map(procesar_pdf, archivos_pdf)
+
+# Procesar los resultados
+for variables_encontradas, descripcion, tipo_documento, ref_factura in resultados:
     datos.append(variables_encontradas)
+    descripciones.append(descripcion)
+    tipos_documentos.append(tipo_documento)
+    referencias_factura.append(ref_factura)
 
 # Crear un DataFrame con los datos extraídos
 df = pd.DataFrame(datos)
@@ -159,8 +207,10 @@ df['descripcion'] = descripciones
 df['Tipo de doc'] = tipos_documentos
 df['Ref. Factura'] = referencias_factura
 
+# Ajustar 'Total Bruto Factura' para que se cumpla la ecuación
+ajustar_total_bruto_factura(df)
+
 # Guardar el DataFrame en un archivo de Excel
-ruta_excel = os.path.join(directorio, 'datos_facturas.xlsx')
+ruta_excel = os.path.join(directorio, "archivo_final.xlsx")
 df.to_excel(ruta_excel, index=False)
 
-print(f"Archivo de Excel creado en: {ruta_excel}")

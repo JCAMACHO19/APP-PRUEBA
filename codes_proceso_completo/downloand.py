@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -21,7 +21,7 @@ def leer_cufes_desde_excel(archivo_excel):
         for fila in hoja.iter_rows(min_row=2, values_only=True):  # Asumiendo que la primera fila es el encabezado
             cufe = fila[1]  # Índice CUFE está en la segunda columna
             estado = fila[13]  # Estado Factura
-            if estado not in ['Contabilizado', 'Anulado', 'Anulada', 'COSTO MUNICIPIO LA GLORIA', 'COSTO MUNICIPIO SAN CAYETANO', 'COSTO MUNICIPIO SAN JOSE DE CUCUTA']:
+            if estado not in ['Contabilizado', 'Anulado', 'Anulada','No procesado', 'COSTO MUNICIPIO LA GLORIA', 'COSTO MUNICIPIO SAN CAYETANO', 'COSTO MUNICIPIO SAN JOSE DE CUCUTA']:
                 cufes.append(cufe)
         return cufes
     except Exception as e:
@@ -33,7 +33,7 @@ def buscar_y_descargar_factura(driver, cufe, carpeta_descargas):
     nombre_archivo = os.path.join(carpeta_descargas, f'{cufe}.pdf')
     if os.path.exists(nombre_archivo):
         logging.info(f'La factura para el CUFE {cufe} ya existe. No se descargará nuevamente.')
-        return True  # Retorna True si la factura ya fue descargada
+        return
 
     try:
         driver.get('https://catalogo-vpfe.dian.gov.co/User/SearchDocument')
@@ -51,18 +51,17 @@ def buscar_y_descargar_factura(driver, cufe, carpeta_descargas):
 
         time.sleep(5)  # Ajusta según sea necesario
         logging.info(f'Intentando descargar la factura para CUFE {cufe}.')
-        return True
-    except EC.TimeoutException:
-        logging.error(f'Tiempo de espera agotado para la carga de elementos en la página.')
-        reiniciar_navegador(driver)
-        return False
     except Exception as e:
-        logging.error(f'Error al intentar descargar la factura para CUFE {cufe}: {e}')
-        reiniciar_navegador(driver)
-        return False
+        if isinstance(e, EC.TimeoutException):
+            logging.error(f'Error de TimeoutException para CUFE {cufe}. Reiniciando pestaña...')
+            reiniciar_navegador(driver, carpeta_descargas)
+            buscar_y_descargar_factura(driver, cufe, carpeta_descargas)
+        else:
+            logging.error(f'Error al intentar descargar la factura para CUFE {cufe}: {e}')
+            reiniciar_navegador(driver, carpeta_descargas)
 
 # Función para reiniciar el navegador en caso de error
-def reiniciar_navegador(driver):
+def reiniciar_navegador(driver, carpeta_descargas):
     try:
         driver.quit()
         logging.info('Reiniciando el navegador...')
@@ -94,21 +93,6 @@ def configurar_descargas(carpeta_descargas):
         logging.error(f'Error al configurar el navegador: {e}')
         return None
 
-# Función para descargar facturas en paralelo
-def descargar_facturas_en_paralelo(cufes, carpeta_descargas):
-    def tarea(cufe):
-        driver = configurar_descargas(carpeta_descargas)
-        if driver:
-            resultado = buscar_y_descargar_factura(driver, cufe, carpeta_descargas)
-            driver.quit()
-            return cufe, resultado
-        return cufe, False
-
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        resultados = list(executor.map(tarea, cufes))
-
-    return resultados
-
 UPLOAD_FOLDER =  os.path.abspath("")
 
 # Ejemplo de uso
@@ -118,15 +102,26 @@ carpeta_descargas = os.path.join(UPLOAD_FOLDER, "archivos_usuarios")
 # Leer los CUFEs desde el archivo Excel
 cufes = leer_cufes_desde_excel(archivo_excel)
 
-# Descargar facturas en paralelo
-resultados = descargar_facturas_en_paralelo(cufes, carpeta_descargas)
+# Configurar tres instancias del navegador
+drivers = [configurar_descargas(carpeta_descargas) for _ in range(3)]
 
-# Verificar resultados y realizar un segundo pase si es necesario
-cufes_faltantes = [cufe for cufe, descargado in resultados if not descargado]
-if cufes_faltantes:
-    logging.info(f'Las siguientes facturas no se descargaron en el primer pase: {cufes_faltantes}')
-    logging.info('Intentando descargar las facturas faltantes...')
-    resultados_segundo_pase = descargar_facturas_en_paralelo(cufes_faltantes, carpeta_descargas)
-    # Aquí puedes agregar lógica adicional para manejar los resultados del segundo pase si es necesario
+# Ejecutar la búsqueda y descarga en paralelo
+with ThreadPoolExecutor(max_workers=3) as executor:
+    futures = []
+    for cufe in cufes:
+        futures.append(executor.submit(buscar_y_descargar_factura, drivers[len(futures) % 3], cufe, carpeta_descargas))
+
+# Esperar a que todas las tareas se completen
+for future in as_completed(futures):
+    try:
+        future.result()
+    except Exception as e:
+        logging.error(f'Error en la tarea: {e}')
+
+# Cerrar todos los navegadores al finalizar
+for driver in drivers:
+    if driver:
+        driver.quit()
 
 logging.info('Proceso de descarga completado.')
+
