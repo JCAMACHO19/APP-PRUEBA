@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -32,7 +33,7 @@ def buscar_y_descargar_factura(driver, cufe, carpeta_descargas):
     nombre_archivo = os.path.join(carpeta_descargas, f'{cufe}.pdf')
     if os.path.exists(nombre_archivo):
         logging.info(f'La factura para el CUFE {cufe} ya existe. No se descargará nuevamente.')
-        return
+        return True  # Retorna True si la factura ya fue descargada
 
     try:
         driver.get('https://catalogo-vpfe.dian.gov.co/User/SearchDocument')
@@ -50,8 +51,29 @@ def buscar_y_descargar_factura(driver, cufe, carpeta_descargas):
 
         time.sleep(5)  # Ajusta según sea necesario
         logging.info(f'Intentando descargar la factura para CUFE {cufe}.')
+        return True
+    except EC.TimeoutException:
+        logging.error(f'Tiempo de espera agotado para la carga de elementos en la página.')
+        reiniciar_navegador(driver)
+        return False
     except Exception as e:
         logging.error(f'Error al intentar descargar la factura para CUFE {cufe}: {e}')
+        reiniciar_navegador(driver)
+        return False
+
+# Función para reiniciar el navegador en caso de error
+def reiniciar_navegador(driver):
+    try:
+        driver.quit()
+        logging.info('Reiniciando el navegador...')
+        time.sleep(3)
+        driver = configurar_descargas(carpeta_descargas)
+        if driver:
+            logging.info('Navegador reiniciado correctamente. Continuando con la descarga.')
+        else:
+            logging.error('No se pudo reiniciar el navegador. Abortando descarga.')
+    except Exception as e:
+        logging.error(f'Error al reiniciar el navegador: {e}')
 
 # Función para configurar la carpeta de descargas del navegador
 def configurar_descargas(carpeta_descargas):
@@ -72,23 +94,39 @@ def configurar_descargas(carpeta_descargas):
         logging.error(f'Error al configurar el navegador: {e}')
         return None
 
+# Función para descargar facturas en paralelo
+def descargar_facturas_en_paralelo(cufes, carpeta_descargas):
+    def tarea(cufe):
+        driver = configurar_descargas(carpeta_descargas)
+        if driver:
+            resultado = buscar_y_descargar_factura(driver, cufe, carpeta_descargas)
+            driver.quit()
+            return cufe, resultado
+        return cufe, False
+
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        resultados = list(executor.map(tarea, cufes))
+
+    return resultados
+
 UPLOAD_FOLDER =  os.path.abspath("")
 
 # Ejemplo de uso
-archivo_excel = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", "archivo final.xlsx")
-carpeta_descargas = os.path.join(UPLOAD_FOLDER,"archivos_usuarios")
+archivo_excel = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", "archivo final.xlsx")
+carpeta_descargas = os.path.join(UPLOAD_FOLDER, "archivos_usuarios")
 
 # Leer los CUFEs desde el archivo Excel
 cufes = leer_cufes_desde_excel(archivo_excel)
 
-# Configurar el navegador y la carpeta de descargas
-driver = configurar_descargas(carpeta_descargas)
+# Descargar facturas en paralelo
+resultados = descargar_facturas_en_paralelo(cufes, carpeta_descargas)
 
-if driver:
-    # Buscar y descargar facturas para cada CUFE
-    for cufe in cufes:
-        buscar_y_descargar_factura(driver, cufe, carpeta_descargas)
-        # renombrar_archivos_pdf(carpeta_descargas)  # Comentado para mantener el nombre original
+# Verificar resultados y realizar un segundo pase si es necesario
+cufes_faltantes = [cufe for cufe, descargado in resultados if not descargado]
+if cufes_faltantes:
+    logging.info(f'Las siguientes facturas no se descargaron en el primer pase: {cufes_faltantes}')
+    logging.info('Intentando descargar las facturas faltantes...')
+    resultados_segundo_pase = descargar_facturas_en_paralelo(cufes_faltantes, carpeta_descargas)
+    # Aquí puedes agregar lógica adicional para manejar los resultados del segundo pase si es necesario
 
-    # Cerrar el navegador
-    driver.quit()
+logging.info('Proceso de descarga completado.')

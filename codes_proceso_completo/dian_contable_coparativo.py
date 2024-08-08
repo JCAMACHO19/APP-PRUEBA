@@ -14,7 +14,7 @@ UPLOAD_FOLDER =  os.path.abspath("")
 # Definir las rutas de los archivos
 ruta_archivo_dian = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'DIAN.xlsx')
 ruta_archivo_sinco = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'SINCO.xlsx')
-ruta_archivo_salida = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'MovDocCuenta_CSV.csv')
+ruta_archivo_salida = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'archivo final.xlsx')
 
 # Procesar el archivo DIAN
 df_dian = pd.read_excel(cargar_archivo(ruta_archivo_dian))
