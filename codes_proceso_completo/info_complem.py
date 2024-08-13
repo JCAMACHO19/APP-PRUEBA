@@ -3,10 +3,10 @@ import xlwt
 from xlutils.copy import copy
 import os
 
-UPLOAD_FOLDER =  os.path.abspath("")
+UPLOAD_FOLDER = os.path.abspath("")
 
 # Ruta del archivo
-file_path = os.path.join(UPLOAD_FOLDER,"archivos_usuarios","doc_importar.xls")
+file_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", "doc_importar.xls")
 
 # Abrir el archivo Excel
 workbook = xlrd.open_workbook(file_path, formatting_info=True)
@@ -21,6 +21,7 @@ header = sheet.row_values(0)
 index_mCuenta = header.index('mCuenta')
 index_mDebito = header.index('mDebito')
 index_mCredito = header.index('mCredito')
+index_dTercero = header.index('dTercero')
 
 # Función para redondear los valores basándose en los decimales
 def round_based_on_decimal(value):
@@ -34,6 +35,7 @@ for row_idx in range(1, sheet.nrows):  # Empezar desde la segunda fila para omit
     mCuenta = sheet.cell_value(row_idx, index_mCuenta)
     mDebito = sheet.cell_value(row_idx, index_mDebito)
     mCredito = sheet.cell_value(row_idx, index_mCredito)
+    dTercero = sheet.cell_value(row_idx, index_dTercero)
     
     # Redondear los valores de mDebito y mCredito
     mDebito = round_based_on_decimal(mDebito)
@@ -42,6 +44,13 @@ for row_idx in range(1, sheet.nrows):  # Empezar desde la segunda fila para omit
     # Escribir los valores redondeados de mDebito y mCredito
     sheet_copy.write(row_idx, index_mDebito, mDebito)
     sheet_copy.write(row_idx, index_mCredito, mCredito)
+
+    # Convertir dTercero a número entero si es posible
+    try:
+        dTercero_int = int(float(dTercero))
+        sheet_copy.write(row_idx, index_dTercero, dTercero_int)
+    except ValueError:
+        pass  # Si no es un número válido, dejarlo como está
 
     # Condiciones para llenar con 0
     if mCuenta and mDebito == "":
@@ -58,3 +67,4 @@ for row_idx in range(1, sheet.nrows):  # Empezar desde la segunda fila para omit
 
 # Guardar los cambios en el archivo
 workbook_copy.save(file_path)
+

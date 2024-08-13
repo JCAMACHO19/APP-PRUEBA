@@ -9,12 +9,12 @@ def cargar_archivo(ruta):
         return ruta
     raise ValueError(f"No se ha encontrado el archivo en la ruta especificada: {ruta}")
 
-UPLOAD_FOLDER =  os.path.abspath("")
+UPLOAD_FOLDER = os.path.abspath("")
 
 # Definir las rutas de los archivos
-ruta_archivo_dian = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'DIAN.xlsx')
-ruta_archivo_sinco = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'SINCO.xlsx')
-ruta_archivo_salida = os.path.join(UPLOAD_FOLDER,"archivos_usuarios", 'archivo final.xlsx')
+ruta_archivo_dian = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", 'DIAN.xlsx')
+ruta_archivo_sinco = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", 'SINCO.xlsx')
+ruta_archivo_salida = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", 'archivo final.xlsx')
 
 # Procesar el archivo DIAN
 df_dian = pd.read_excel(cargar_archivo(ruta_archivo_dian))
@@ -61,7 +61,8 @@ for fila in hoja.iter_rows(values_only=True):
             nueva_fila[documento_tercero_index] = documento_tercero
             nueva_hoja.append(nueva_fila)
 
-nuevo_nombre_archivo_sinco = "MovDocCuenta_filtrado.xlsx"
+# Guardar el archivo "MovDocCuenta_filtrado.xlsx" en la ubicación deseada
+nuevo_nombre_archivo_sinco = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", "MovDocCuenta_filtrado.xlsx")
 nuevo_wb.save(nuevo_nombre_archivo_sinco)
 
 # Procesar el archivo generado de SINCO
@@ -69,7 +70,9 @@ df_sinco = pd.read_excel(nuevo_nombre_archivo_sinco)
 df_sinco[['Numero de Factura', 'Concepto Restante']] = df_sinco['Concepto'].str.extract(r'([A-Z0-9\-]+)\s+([A-Z].*)')
 df_sinco['Numero de Factura'] = df_sinco['Numero de Factura'].str.replace(r'[-_.]', '', regex=True)
 df_sinco.drop(columns=['Concepto'], inplace=True)
-nombre_archivo_tratado_sinco = "MovDocCuenta_tratado.xlsx"
+
+# Guardar el archivo "MovDocCuenta_tratado.xlsx" en la ubicación deseada
+nombre_archivo_tratado_sinco = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", "MovDocCuenta_tratado.xlsx")
 df_sinco.to_excel(nombre_archivo_tratado_sinco, index=False)
 
 # Fusionar y comparar los archivos
@@ -121,8 +124,8 @@ df1['Documento Contable'] = docs_contables_nuevos
 # Guardar el DataFrame modificado en un nuevo archivo Excel
 df1.to_excel(archivo_salida, index=False)
 
-# Eliminar archivos temporales
-archivos_temporales = [nombre_archivo_modificado_dian, nuevo_nombre_archivo_sinco, nombre_archivo_tratado_sinco]
+# Eliminar archivos temporales, excluyendo "MovDocCuenta_tratado.xlsx"
+archivos_temporales = [nombre_archivo_modificado_dian, nuevo_nombre_archivo_sinco]
 for archivo in archivos_temporales:
     try:
         os.remove(archivo)

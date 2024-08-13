@@ -5,12 +5,12 @@ from xlutils.copy import copy
 import re
 import os
 
-UPLOAD_FOLDER =  os.path.abspath("")
+UPLOAD_FOLDER = os.path.abspath("")
 
 # Define las rutas de los archivos
-file_path_importar = os.path.join(UPLOAD_FOLDER,"archivos_usuarios","doc_importar.xls")
-file_path_datos = os.path.join(UPLOAD_FOLDER,"archivos_usuarios","datos_facturas.xlsx")
-file_path_cuenta_contable = os.path.join(UPLOAD_FOLDER,"archivos_usuarios","Cuenta_contable.xlsx")
+file_path_importar = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", "doc_importar.xls")
+file_path_datos = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", "datos_facturas.xlsx")
+file_path_cuenta_contable = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", "Cuenta_contable.xlsx")
 
 # Lee los archivos Excel con los datos a rellenar
 df_datos = pd.read_excel(file_path_datos)
@@ -37,6 +37,9 @@ sheet = wb.get_sheet(0)
 
 # Fila destino en el archivo de importación
 dest_row = 1  # Comienza desde la segunda fila en el archivo de importación
+
+# Calcula el valor más frecuente (moda) de la columna 'Centro Costos'
+centro_costos_mas_frecuente = df_cuenta_contable['Centro Costos'].mode()[0] if not df_cuenta_contable['Centro Costos'].empty else None
 
 # Itera sobre todas las filas del archivo datos_facturas.xlsx
 for i, row in df_datos.iterrows():
@@ -81,7 +84,8 @@ for i, row in df_datos.iterrows():
     mcuenta_values = {
         'IVA': cuenta_iva.values[0] if not cuenta_iva.empty else '24081001',
         'Total factura (=)': '23359505',
-        'INC': '51159801'
+        'INC': '51159801',
+        'Fallback': '53959501'  # Valor predeterminado cuando no se encuentra un NIT
     }
     
     # Contar cuántas columnas tienen valores mayores a cero
@@ -125,6 +129,8 @@ for i, row in df_datos.iterrows():
                 cuenta_contable = df_cuenta_contable.loc[df_cuenta_contable['NIT'] == nit_del_emisor, 'Cuenta Contable Moda']
                 if not cuenta_contable.empty:
                     sheet.write(dest_row, 7, str(cuenta_contable.values[0]))  # mCuenta (convertido a cadena)
+                else:
+                    sheet.write(dest_row, 7, mcuenta_values['Fallback'])  # Usa el valor predeterminado si no se encuentra el NIT
             
             # Rellenar mDescripcion, mNit, mBase, mCentroC, mSegmento solo en las filas correspondientes
             sheet.write(dest_row, 10, f"{numero_factura} {descripcion}")  # mDescripcion
@@ -141,7 +147,7 @@ for i, row in df_datos.iterrows():
             if not centro_costos.empty:
                 sheet.write(dest_row, 13, str(centro_costos.values[0]))  # mCentroC (convertido a cadena)
             else:
-                sheet.write(dest_row, 13, None)  # mCentroC
+                sheet.write(dest_row, 13, centro_costos_mas_frecuente)  # mCentroC (valor más frecuente)
             
             sheet.write(dest_row, 14, None)  # mSegmento
             

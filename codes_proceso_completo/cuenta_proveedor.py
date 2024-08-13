@@ -27,7 +27,7 @@ df_filtered = df[df['Tipo Doc.'].isin(['CP', 'AJ', 'LG'])]
 
 # Calcular la moda de "Cuenta Contable" para cada "NIT" en el DataFrame filtrado
 def moda_cuenta_contable(grupo):
-    cuentas_especiales = ['53152001', '73359507', '53959501']
+    cuentas_especiales = ['53152001', '73359507', '53959501','51159801']
     # Filtrar las cuentas que no sean especiales
     cuentas_no_especiales = grupo[~grupo['Cuenta Contable'].isin(cuentas_especiales)]
     # Si hay cuentas no especiales, retornar la moda de estas
