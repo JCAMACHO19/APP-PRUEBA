@@ -1,3 +1,7 @@
+import pandas as pd
+import os
+import logging
+import openpyxl
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -5,12 +9,11 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
-import openpyxl
-import os
-import logging
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+UPLOAD_FOLDER = os.path.abspath("")
 
 # Función para leer los CUFEs desde un archivo Excel
 def leer_cufes_desde_excel(archivo_excel):
@@ -21,7 +24,7 @@ def leer_cufes_desde_excel(archivo_excel):
         for fila in hoja.iter_rows(min_row=2, values_only=True):  # Asumiendo que la primera fila es el encabezado
             cufe = fila[1]  # Índice CUFE está en la segunda columna
             estado = fila[13]  # Estado Factura
-            if estado not in ['Contabilizado', 'Anulado', 'Anulada','No procesado', 'COSTO MUNICIPIO LA GLORIA', 'COSTO MUNICIPIO SAN CAYETANO', 'COSTO MUNICIPIO SAN JOSE DE CUCUTA']:
+            if estado not in ['Contabilizado', 'Anulado', 'Anulada', 'No procesado', 'COSTO MUNICIPIO LA GLORIA', 'COSTO MUNICIPIO SAN CAYETANO', 'COSTO MUNICIPIO SAN JOSE DE CUCUTA']:
                 cufes.append(cufe)
         return cufes
     except Exception as e:
@@ -93,35 +96,41 @@ def configurar_descargas(carpeta_descargas):
         logging.error(f'Error al configurar el navegador: {e}')
         return None
 
-UPLOAD_FOLDER =  os.path.abspath("")
+# Obtener la lista de subcarpetas dentro de "archivos_usuarios"
+subcarpetas = [os.path.join(UPLOAD_FOLDER, "archivos_usuarios", d) for d in os.listdir(os.path.join(UPLOAD_FOLDER, "archivos_usuarios")) if os.path.isdir(os.path.join(UPLOAD_FOLDER, "archivos_usuarios", d))]
 
-# Ejemplo de uso
-archivo_excel = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", "archivo final.xlsx")
-carpeta_descargas = os.path.join(UPLOAD_FOLDER, "archivos_usuarios")
+# Asegurarse de que hay subcarpetas disponibles
+if not subcarpetas:
+    raise ValueError("No se encontraron subcarpetas dentro de la carpeta 'archivos_usuarios'.")
 
-# Leer los CUFEs desde el archivo Excel
-cufes = leer_cufes_desde_excel(archivo_excel)
+# Iterar sobre cada subcarpeta para procesar los archivos dentro de ella
+for subcarpeta in subcarpetas:
+    # Ruta del archivo de entrada en la subcarpeta
+    archivo_excel = os.path.join(subcarpeta, "archivo final.xlsx")
+    carpeta_descargas = subcarpeta  # Usar la misma subcarpeta para las descargas
 
-# Configurar tres instancias del navegador
-drivers = [configurar_descargas(carpeta_descargas) for _ in range(3)]
+    # Leer los CUFEs desde el archivo Excel
+    cufes = leer_cufes_desde_excel(archivo_excel)
 
-# Ejecutar la búsqueda y descarga en paralelo
-with ThreadPoolExecutor(max_workers=3) as executor:
-    futures = []
-    for cufe in cufes:
-        futures.append(executor.submit(buscar_y_descargar_factura, drivers[len(futures) % 3], cufe, carpeta_descargas))
+    # Configurar tres instancias del navegador
+    drivers = [configurar_descargas(carpeta_descargas) for _ in range(3)]
 
-# Esperar a que todas las tareas se completen
-for future in as_completed(futures):
-    try:
-        future.result()
-    except Exception as e:
-        logging.error(f'Error en la tarea: {e}')
+    # Ejecutar la búsqueda y descarga en paralelo
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = []
+        for cufe in cufes:
+            futures.append(executor.submit(buscar_y_descargar_factura, drivers[len(futures) % 3], cufe, carpeta_descargas))
 
-# Cerrar todos los navegadores al finalizar
-for driver in drivers:
-    if driver:
-        driver.quit()
+    # Esperar a que todas las tareas se completen
+    for future in as_completed(futures):
+        try:
+            future.result()
+        except Exception as e:
+            logging.error(f'Error en la tarea: {e}')
+
+    # Cerrar todos los navegadores al finalizar
+    for driver in drivers:
+        if driver:
+            driver.quit()
 
 logging.info('Proceso de descarga completado.')
-

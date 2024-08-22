@@ -3,6 +3,7 @@ import subprocess
 import sys
 import os
 import time
+from datetime import datetime
 
 # Configurar el tamaño de la página
 st.set_page_config(
@@ -12,9 +13,14 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Configurar la carpeta de subida
-UPLOAD_FOLDER = os.path.abspath("")
+# Configurar la carpeta de subida principal
+UPLOAD_FOLDER = os.path.abspath("archivos_usuarios")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Crear subcarpeta con la hora actual
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+subfolder = os.path.join(UPLOAD_FOLDER, timestamp)
+os.makedirs(subfolder, exist_ok=True)
 
 # Título de la aplicación
 st.markdown("# MastersAccounting")
@@ -52,10 +58,10 @@ elif selected_tab == "Procesar Archivos":
         st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Histórico cuentas Costo y Gasto")
 
     if st.button('Procesar Archivos'):
-        if dian_file and sinco_file and cuentas_file:
-            dian_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", 'DIAN.xlsx')
-            sinco_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", 'SINCO.xlsx')
-            cuentas_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", 'MovDocCuenta_CSV.csv')
+        if dian_file. sinco_file and cuentas_file:
+            dian_path = os.path.join(subfolder, 'DIAN.xlsx')
+            sinco_path = os.path.join(subfolder, 'SINCO.xlsx')
+            cuentas_path = os.path.join(subfolder, 'MovDocCuenta_CSV.csv')
 
             with open(dian_path, 'wb') as f:
                 f.write(dian_file.getbuffer())
@@ -114,8 +120,8 @@ elif selected_tab == "Comparar Archivos":
 
     if st.button('Comparar Archivos'):
         if dian_file and sinco_file:
-            dian_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", 'DIAN.xlsx')
-            sinco_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", 'SINCO.xlsx')
+            dian_path = os.path.join(subfolder, 'DIAN.xlsx')
+            sinco_path = os.path.join(subfolder, 'SINCO.xlsx')
 
             with open(dian_path, 'wb') as f:
                 f.write(dian_file.getbuffer())
@@ -172,8 +178,8 @@ elif selected_tab == "Descargar Archivos":
 
     if st.button('Descargar Archivos'):
         if dian_file and sinco_file:
-            dian_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", 'DIAN.xlsx')
-            sinco_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", 'SINCO.xlsx')
+            dian_path = os.path.join(subfolder, 'DIAN.xlsx')
+            sinco_path = os.path.join(subfolder, 'SINCO.xlsx')
 
             with open(dian_path, 'wb') as f:
                 f.write(dian_file.getbuffer())
@@ -213,5 +219,4 @@ elif selected_tab == "Descargar Archivos":
         else:
             st.error('Ambos archivos deben ser seleccionados')
 
-# Para ejecutar la aplicación, usa el siguiente comando en tu terminal:
 # streamlit run app.py

@@ -176,41 +176,49 @@ def procesar_pdf(ruta_pdf):
 
     return variables_encontradas, descripcion, tipo_documento, ref_factura
 
-# Ruta donde se encuentra la carpeta PRUEBA IMPORTE DE DOCUMENTOS
-directorio = os.path.join(os.path.abspath(""), "archivos_usuarios")
+UPLOAD_FOLDER = os.path.abspath("")
 
-# Obtener todos los archivos PDF en la carpeta PRUEBA IMPORTE DE DOCUMENTOS
-archivos_pdf = [os.path.join(directorio, archivo) for archivo in os.listdir(directorio) if archivo.endswith('.pdf')]
+subcarpetas = [os.path.join(UPLOAD_FOLDER, "archivos_usuarios", d) for d in os.listdir(os.path.join(UPLOAD_FOLDER, "archivos_usuarios")) if os.path.isdir(os.path.join(UPLOAD_FOLDER, "archivos_usuarios", d))]
 
-# Lista para almacenar los datos extraídos de cada PDF
-datos = []
-descripciones = []
-tipos_documentos = []
-referencias_factura = []
+# Asegurarse de que hay subcarpetas disponibles
+if not subcarpetas:
+    raise ValueError("No se encontraron subcarpetas dentro de la carpeta 'archivos_usuarios'.")
 
-# Ejecutar la extracción de información en paralelo
-with ThreadPoolExecutor() as executor:
-    resultados = executor.map(procesar_pdf, archivos_pdf)
+# Procesar cada subcarpeta de forma independiente
+for subcarpeta in subcarpetas:
+    # Obtener todos los archivos PDF en la subcarpeta actual
+    archivos_pdf = [os.path.join(subcarpeta, archivo) for archivo in os.listdir(subcarpeta) if archivo.endswith('.pdf')]
 
-# Procesar los resultados
-for variables_encontradas, descripcion, tipo_documento, ref_factura in resultados:
-    datos.append(variables_encontradas)
-    descripciones.append(descripcion)
-    tipos_documentos.append(tipo_documento)
-    referencias_factura.append(ref_factura)
+    # Lista para almacenar los datos extraídos de cada PDF
+    datos = []
+    descripciones = []
+    tipos_documentos = []
+    referencias_factura = []
 
-# Crear un DataFrame con los datos extraídos
-df = pd.DataFrame(datos)
+    # Ejecutar la extracción de información en paralelo
+    with ThreadPoolExecutor() as executor:
+        resultados = executor.map(procesar_pdf, archivos_pdf)
 
-# Añadir las nuevas columnas al DataFrame
-df['descripcion'] = descripciones
-df['Tipo de doc'] = tipos_documentos
-df['Ref. Factura'] = referencias_factura
+    # Procesar los resultados
+    for variables_encontradas, descripcion, tipo_documento, ref_factura in resultados:
+        datos.append(variables_encontradas)
+        descripciones.append(descripcion)
+        tipos_documentos.append(tipo_documento)
+        referencias_factura.append(ref_factura)
 
-# Ajustar 'Total Bruto Factura' para que se cumpla la ecuación
-ajustar_total_bruto_factura(df)
+    # Crear un DataFrame con los datos extraídos
+    df = pd.DataFrame(datos)
 
-# Guardar el DataFrame en un archivo de Excel
-ruta_excel = os.path.join(directorio, "datos_facturas.xlsx")
-df.to_excel(ruta_excel, index=False)
+    # Añadir las nuevas columnas al DataFrame
+    df['descripcion'] = descripciones
+    df['Tipo de doc'] = tipos_documentos
+    df['Ref. Factura'] = referencias_factura
+
+    # Ajustar 'Total Bruto Factura' para que se cumpla la ecuación
+    ajustar_total_bruto_factura(df)
+
+    # Guardar el archivo Excel en la subcarpeta actual
+    ruta_excel = os.path.join(subcarpeta, "datos_facturas.xlsx")
+    df.to_excel(ruta_excel, index=False)
+
 
