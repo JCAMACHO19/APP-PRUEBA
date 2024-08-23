@@ -13,8 +13,7 @@ scripts = [
     'info_dian.py', 
     'cuenta_proveedor.py', 
     'importar_doc.py', 
-    'info_complem.py',
-    'archivo_comprimido.py'
+    'info_complem.py'
 ]
 
 for script in scripts:

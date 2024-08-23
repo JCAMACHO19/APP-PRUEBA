@@ -4,13 +4,38 @@ from xlrd import open_workbook
 from xlutils.copy import copy
 import re
 import os
+import shutil
 
+# Define la carpeta principal
 UPLOAD_FOLDER = os.path.abspath("")
 
-# Define las rutas de los archivos
+# Ruta fija del archivo "doc_importar.xls"
 file_path_importar = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", "doc_importar.xls")
-file_path_datos = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", "datos_facturas.xlsx")
-file_path_cuenta_contable = os.path.join(UPLOAD_FOLDER, "archivos_usuarios", "Cuenta_contable.xlsx")
+
+# Obtiene todas las subcarpetas dentro de "archivos_usuarios"
+subcarpetas = [
+    os.path.join(UPLOAD_FOLDER, "archivos_usuarios", d) 
+    for d in os.listdir(os.path.join(UPLOAD_FOLDER, "archivos_usuarios")) 
+    if os.path.isdir(os.path.join(UPLOAD_FOLDER, "archivos_usuarios", d))
+]
+
+# Asegúrate de que hay subcarpetas disponibles
+if not subcarpetas:
+    raise ValueError("No se encontraron subcarpetas dentro de la carpeta 'archivos_usuarios'.")
+
+# Procesar cada subcarpeta de forma independiente
+for subcarpeta in subcarpetas:
+    # Copia el archivo "doc_importar.xls" en la subcarpeta actual
+    destino_importar = os.path.join(subcarpeta, "doc_importar.xls")
+    shutil.copy(file_path_importar, destino_importar)
+
+    # Define las rutas de los archivos que se encuentran en la subcarpeta
+    file_path_datos = os.path.join(subcarpeta, "datos_facturas.xlsx")
+    file_path_cuenta_contable = os.path.join(subcarpeta, "Cuenta_contable.xlsx")
+    
+    # Verifica que los archivos necesarios existan
+    if not os.path.exists(file_path_datos) or not os.path.exists(file_path_cuenta_contable):
+        print(f"Faltan archivos en la subcarpeta: {subcarpeta}")
 
 # Lee los archivos Excel con los datos a rellenar
 df_datos = pd.read_excel(file_path_datos)

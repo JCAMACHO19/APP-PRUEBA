@@ -126,28 +126,33 @@ def ajustar_total_bruto_factura(df):
     mensajes_ajuste = []
 
     for index, row in df.iterrows():
-        total_bruto = row['Total Bruto Factura']
-        iva = row['IVA']
-        inc = row['INC']
-        total_factura = row['Total factura (=)']
+        try:
+            total_bruto = float(row['Total Bruto Factura'])
+            iva = float(row['IVA'])
+            inc = float(row['INC'])
+            total_factura = float(row['Total factura (=)'])
 
-        # Calcular la suma de Total Bruto Factura + IVA + INC
-        suma = total_bruto + iva + inc
+            # Calcular la suma de Total Bruto Factura + IVA + INC
+            suma = total_bruto + iva + inc
 
-        # Verificar si hay una diferencia
-        diferencia = total_factura - suma
+            # Verificar si hay una diferencia
+            diferencia = total_factura - suma
 
-        if diferencia != 0:
-            # Ajustar la diferencia al valor de Total Bruto Factura
-            nuevo_total_bruto = total_bruto + diferencia
-            # Asegurar que Total Bruto Factura no sea negativo
-            if nuevo_total_bruto < 0:
-                nuevo_total_bruto = 0
-            df.at[index, 'Total Bruto Factura'] = nuevo_total_bruto
-            # Añadir mensaje de ajuste
-            mensajes_ajuste.append(f"Ajustado: diferencia de {diferencia}")
-        else:
-            mensajes_ajuste.append("Sin ajuste")
+            if diferencia != 0:
+                # Ajustar la diferencia al valor de Total Bruto Factura
+                nuevo_total_bruto = total_bruto + diferencia
+                # Asegurar que Total Bruto Factura no sea negativo
+                if nuevo_total_bruto < 0:
+                    nuevo_total_bruto = 0
+                df.at[index, 'Total Bruto Factura'] = nuevo_total_bruto
+                # Añadir mensaje de ajuste
+                mensajes_ajuste.append(f"Ajustado: diferencia de {diferencia}")
+            else:
+                mensajes_ajuste.append("Sin ajuste")
+
+        except (ValueError, TypeError) as e:
+            # Si ocurre un error de tipo o valor, ignorar esta fila
+            mensajes_ajuste.append(f"Error de tipo/valor: {e}, fila ignorada")
 
     # Añadir la columna de mensajes de ajuste al DataFrame
     df['Mensaje Ajuste'] = mensajes_ajuste
