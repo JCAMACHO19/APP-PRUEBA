@@ -15,8 +15,8 @@ UPLOAD_FOLDER = os.path.abspath("archivos_usuarios")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Crear subcarpeta con la hora actual
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-subfolder = os.path.join(UPLOAD_FOLDER, timestamp)
+
+subfolder = os.path.join(UPLOAD_FOLDER)
 os.makedirs(subfolder, exist_ok=True)
 
 # Título de la aplicación
@@ -34,4 +34,5 @@ selected_tab = st.selectbox("Seleccione una pestaña", list(tabs.keys()))
 # Importar y ejecutar el código correspondiente a la pestaña seleccionada
 module = __import__(f"tabs.{tabs[selected_tab]}", fromlist=[None])
 module.run(subfolder)
+
 # streamlit run app_2.py

@@ -1,17 +1,21 @@
 import os
 import zipfile
-import xlrd
-import xlwt
-from xlutils.copy import copy
 import fitz  # PyMuPDF
+import shutil
 
-UPLOAD_FOLDER =  os.path.abspath("")
+UPLOAD_FOLDER = os.path.abspath("")
 
-# Ruta de la carpeta donde se encuentran los archivos
-folder_path =  os.path.join(UPLOAD_FOLDER,"archivos_usuarios")
+# Ruta de la carpeta principal donde se encuentran las subcarpetas
+folder_path = os.path.join(UPLOAD_FOLDER, "archivos_usuarios")
 
-# Ruta del archivo zip que se va a crear
-zip_file_path = os.path.join(folder_path, 'archivos_comprimidos.zip')
+# Lista de archivos a excluir
+excluir_archivos = [
+    'Cuenta_contable.xlsx',
+    'MovDocCuenta_tratado.xlsx',
+    'SINCO.xlsx',
+    'DIAN.xlsx',
+    'MovDocCuenta_Excel.xlsx'
+]
 
 # Función para buscar variables en el texto extraído del documento PDF
 def buscar_variables(documento):
@@ -37,14 +41,44 @@ def buscar_variables(documento):
 
     return variables
 
-# Crear un archivo zip y renombrar los PDFs dentro del zip
-with zipfile.ZipFile(zip_file_path, 'w') as zipf:
-    # Añadir todos los archivos PDF al archivo zip y renombrarlos
-    for foldername, subfolders, filenames in os.walk(folder_path):
-        for filename in filenames:
-            if filename.endswith('.pdf'):
-                file_path = os.path.join(foldername, filename)
-                
+# Recorrer todas las subcarpetas en "archivos_usuarios"
+for subfolder in os.listdir(folder_path):
+    subfolder_path = os.path.join(folder_path, subfolder)
+    
+    # Verificar que sea una subcarpeta
+    if os.path.isdir(subfolder_path):
+        # Ruta del archivo zip que se va a crear con el mismo nombre de la subcarpeta
+        zip_file_path = os.path.join(folder_path, f'{subfolder}.zip')
+        
+        with zipfile.ZipFile(zip_file_path, 'w') as zipf:
+            # Recopilar y ordenar los archivos (.xls, .xlsx, luego .pdf)
+            archivos_xls = []
+            archivos_xlsx = []
+            archivos_pdf = []
+
+            for foldername, subfolders, filenames in os.walk(subfolder_path):
+                for filename in filenames:
+                    if filename in excluir_archivos:
+                        continue  # Omitir los archivos que están en la lista de exclusión
+
+                    file_path = os.path.join(foldername, filename)
+                    if filename.endswith('.xls'):
+                        archivos_xls.append((file_path, os.path.relpath(file_path, subfolder_path)))
+                    elif filename.endswith('.xlsx'):
+                        archivos_xlsx.append((file_path, os.path.relpath(file_path, subfolder_path)))
+                    elif filename.endswith('.pdf'):
+                        archivos_pdf.append((file_path, os.path.relpath(file_path, subfolder_path)))
+
+            # Añadir los archivos .xls primero
+            for file_path, arcname in archivos_xls:
+                zipf.write(file_path, arcname)
+
+            # Añadir los archivos .xlsx luego
+            for file_path, arcname in archivos_xlsx:
+                zipf.write(file_path, arcname)
+
+            # Añadir los archivos PDF renombrados
+            for file_path, arcname in archivos_pdf:
                 # Abrir el archivo PDF
                 documento = fitz.open(file_path)
 
@@ -59,42 +93,9 @@ with zipfile.ZipFile(zip_file_path, 'w') as zipf:
                 nuevo_nombre = nuevo_nombre.replace("/", "-")  # Reemplazar '/' por '-' para evitar problemas en el nombre del archivo
 
                 # Añadir el archivo PDF al zip con el nuevo nombre
-                zipf.write(file_path, nuevo_nombre)
-                os.remove(file_path)
+                zipf.write(file_path, os.path.join(os.path.dirname(arcname), nuevo_nombre))
 
-    # Añadir una copia exacta del archivo "doc_importar.xls"
-    doc_importar_path = os.path.join(folder_path, 'doc_importar.xls')
-    if os.path.exists(doc_importar_path):
-        zipf.write(doc_importar_path, os.path.relpath(doc_importar_path, folder_path))
+        # Eliminar la subcarpeta original
+        shutil.rmtree(subfolder_path)
 
-    # Añadir el archivo "archivo final" y eliminarlo de la carpeta
-    archivo_final_path = os.path.join(folder_path, 'archivo final.xlsx')
-    if os.path.exists(archivo_final_path):
-        zipf.write(archivo_final_path, os.path.relpath(archivo_final_path, folder_path))
-        os.remove(archivo_final_path)
-
-    # Eliminar todos los archivos .xlsx en la carpeta (excepto "doc_importar.xls")
-    for foldername, subfolders, filenames in os.walk(folder_path):
-        for filename in filenames:
-            if filename.endswith('.xlsx') and filename != 'doc_importar.xls':
-                file_path = os.path.join(foldername, filename)
-                os.remove(file_path)
-
-# Eliminar datos de todas las filas excepto la primera en "doc_importar.xls"
-rb = xlrd.open_workbook(doc_importar_path, formatting_info=True)
-wb = copy(rb)
-ws = wb.get_sheet(0)
-
-# Obtener el número de filas
-nrows = rb.sheet_by_index(0).nrows
-
-# Borrar todas las filas excepto la primera
-for row in range(1, nrows):
-    for col in range(rb.sheet_by_index(0).ncols):
-        ws.write(row, col, '')
-
-# Guardar los cambios en el mismo archivo
-wb.save(doc_importar_path)
-
-print(f'Archivo zip creado en: {zip_file_path}')
-print(f'Archivo "doc_importar.xls" actualizado: solo se mantiene la primera fila de datos.')
+print(f'Se han creado archivos zip para todas las subcarpetas en: {folder_path}, y las subcarpetas originales han sido eliminadas.')
