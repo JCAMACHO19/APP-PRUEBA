@@ -4,7 +4,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-import socket
+
 
 def run(subfolder):
     st.markdown("## Procesar Archivos")
@@ -103,5 +103,4 @@ def run(subfolder):
                 st.error(f'Error al ejecutar el script: {str(e)}')
         else:
             st.error('Todos los archivos deben ser seleccionados')
-
 

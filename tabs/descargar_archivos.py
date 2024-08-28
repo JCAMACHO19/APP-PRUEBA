@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import subprocess
 import sys
-import time
 from datetime import datetime
 
 def run(subfolder):
@@ -40,38 +39,63 @@ def run(subfolder):
                 f.write(sinco_file.getbuffer())
 
             # Crear la barra de progreso
+            st.markdown('<style>div[data-testid="stProgress"] { height: 24px; }</style>', unsafe_allow_html=True)
             progress_bar = st.progress(0)
 
             try:
                 # Directorio donde están ubicados los scripts
-                UPLOAD_FOLDER = os.path.abspath(os.path.join("", "codes_proceso_completo"))
-                # Ruta relativa del script ejecutar_descarg.py en la carpeta "codes_proceso_completo"
+                UPLOAD_FOLDER = os.path.abspath("codes_proceso_completo")
+                # Ruta relativa del script ejecutar_downloand.py en la carpeta "codes_proceso_completo"
                 fixed_script_path = os.path.join(UPLOAD_FOLDER, 'ejecutar_downloand.py')
 
                 # Inicia el script en un subproceso desde la carpeta "codes_proceso_completo"
-                process = subprocess.Popen([sys.executable, fixed_script_path, dian_path, sinco_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                process = subprocess.Popen(
+                    [sys.executable, fixed_script_path, dian_path, sinco_path],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+                )
 
-                # Lee el progreso desde el archivo
-                while True:
-                    time.sleep(1)  # Espera un momento antes de verificar el archivo de progreso
-                    if process.poll() is not None:
-                        break  # Sal del bucle si el proceso ha terminado
-                    try:
-                        with open(os.path.join(subfolder_path, 'progreso.txt'), 'r') as f:
-                            progress = f.read().strip()
-                            if progress:
-                                progress_bar.progress(int(float(progress)))
-                    except FileNotFoundError:
-                        pass
+                # Número total de scripts para calcular el progreso
+                total_scripts = 3
+                completed_scripts = 0
 
-                # Verificar la salida del proceso
-                stdout, stderr = process.communicate()
-                if process.returncode == 0:
-                    st.success('Los archivos se descargaron con éxito')
-                    st.text(stdout)
-                else:
-                    st.error(f'Error al descargar los archivos: {stderr}')
-                    st.text(stderr)
+                with st.spinner('LOADING...'):
+                    # Lee la salida estándar del proceso en tiempo real
+                    for line in iter(process.stdout.readline, ''):
+                        line = line.strip()
+                        if "Start:" in line:
+                            # No hacer nada en el inicio, solo leer la línea
+                            pass
+                        elif "End:" in line:
+                            completed_scripts += 1
+                            progress = completed_scripts / total_scripts
+                            progress_bar.progress(progress)
+
+                    # Espera a que el proceso termine
+                    process.wait()
+
+                    # Verificar la salida del proceso al finalizar
+                    stdout, stderr = process.communicate()
+                    if process.returncode == 0:
+                        st.success('Los archivos se descargaron con éxito')
+                        st.text(stdout)
+
+                        # Buscar el archivo .zip generado en la carpeta
+                        zip_filename = f"{timestamp}.zip"
+                        zip_filepath = os.path.join(subfolder, zip_filename)
+
+                        if os.path.exists(zip_filepath):
+                            with open(zip_filepath, "rb") as f:
+                                st.download_button(
+                                    label="Descargar archivo ZIP",
+                                    data=f,
+                                    file_name=zip_filename,
+                                    mime='application/zip'
+                                )
+                        else:
+                            st.error(f'No se encontró el archivo {zip_filename}')
+                    else:
+                        st.error(f'Error al descargar los archivos: {stderr}')
+                        st.text(stderr)
             except Exception as e:
                 st.error(f'Error al descargar los archivos: {str(e)}')
         else:

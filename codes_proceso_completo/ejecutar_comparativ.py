@@ -20,11 +20,16 @@ for script in scripts:
         break
     
     try:
+        # Imprime el inicio de la ejecución
+        print(f"Start: {script}", flush=True)
         # Ejecutar cada script
         result = subprocess.run([sys.executable, script_path], check=True, capture_output=True, text=True)
+        # Imprime el final de la ejecución
+        print(f"End: {script}", flush=True)
         print(f"Ejecutado {script_path} con éxito")
-        print(result.stdout)
+        print(result.stdout, flush=True)
     except subprocess.CalledProcessError as e:
         print(f"Error al ejecutar {script_path}")
-        print(e.stderr)
-        break  # Detener la ejecución si hay un error
+        print(e.stderr, flush=True)
+        break  # Detener la ejecución si hay un error.
+

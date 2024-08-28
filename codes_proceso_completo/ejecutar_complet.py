@@ -34,3 +34,4 @@ for script in scripts:
         print(e.stderr)
         break  # Detener la ejecución si hay un error
 
+
