@@ -1,15 +1,11 @@
 import streamlit as st
-import subprocess
-import sys
 import os
-import time
-from datetime import datetime
 
-# Configurar el tamaño de la página
+# Configurar el tamaño de la página y el diseño
 st.set_page_config(
-    page_title="MastersAccounting",
+    page_title="Accounting Optimization",
     page_icon=":bar_chart:",
-    layout="wide",  # Cambiar a "wide" para más ancho
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
@@ -18,205 +14,53 @@ UPLOAD_FOLDER = os.path.abspath("archivos_usuarios")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Crear subcarpeta con la hora actual
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-subfolder = os.path.join(UPLOAD_FOLDER, timestamp)
+subfolder = os.path.join(UPLOAD_FOLDER)
 os.makedirs(subfolder, exist_ok=True)
 
-# Título de la aplicación
-st.markdown("# MastersAccounting")
+# Ruta de la imagen del título
+title_image_path = os.path.join("imagen", "titulo_app.jpg")
 
-# Crear las pestañas
-tabs = ["Inicio", "Procesar Archivos", "Comparar Archivos", "Descargar Archivos"]
-selected_tab = st.selectbox("Seleccione una pestaña", tabs)
+# Verificar si la imagen existe y cargarla con st.image
+if os.path.exists(title_image_path):
+    st.image(title_image_path, use_column_width=True)
+else:
+    st.error("La imagen del título no se encontró en la ruta especificada.")
 
-if selected_tab == "Inicio":
-    # Página de inicio con bienvenida y descripción
-    st.markdown("## Bienvenido a MastersAccounting")
-    st.markdown("Selecciona una de las opciones disponibles para ejecutar:")
-    st.markdown("1. **Procesar Archivos**: Verifica y procesa facturas para integrarlas en tu sistema contable.")
-    st.markdown("2. **Comparar Archivos**: Compara diferentes reportes para verificar inconsistencias.")
-    st.markdown("3. **Descargar Archivos**: Descarga reportes procesados.")
-    
-elif selected_tab == "Procesar Archivos":
-    st.markdown("## Procesar Archivos")
-    st.markdown("### Subida de Archivos")
-    col1, col2, col3 = st.columns(3)
+# Ruta de la imagen del logo
+logo_image_path = os.path.join("imagen", "logo_american.png")
 
-    with col1:
-        dian_file = st.file_uploader("Sube el archivo DIAN.xlsx", type="xlsx", key='dian')
-        st.markdown("- **Nombre esperado:** DIAN.xlsx")
-        st.markdown("- **Especificación:** Reporte Dian de Documentos Recibidos")
+# Verificar si la imagen existe y cargarla en la barra lateral
+if os.path.exists(logo_image_path):
+    st.sidebar.image(logo_image_path, use_column_width=True)
+else:
+    st.sidebar.error("El logo no se encontró en la ruta especificada.")
 
-    with col2:
-        sinco_file = st.file_uploader("Sube el archivo SINCO.xlsx", type="xlsx", key='sinco')
-        st.markdown("- **Nombre esperado:** SINCO.xlsx")
-        st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Seleccionando Concepto y Doc del tercero")
+# Barra lateral con opciones de navegación
+st.sidebar.header("¿Qué Análisis Requieres?")
+tabs = {
+    "Inicio": "inicio",
+    "Contabilización Masiva": "procesar_archivos",
+    "Verificación de Facturas": "comparar_archivos",
+    "Descargas Automáticas": "descargar_archivos"
+}
+selected_tab = st.sidebar.selectbox("Seleccione", list(tabs.keys()))
 
-    with col3:
-        cuentas_file = st.file_uploader("Sube el archivo MovDocCuenta_CSV.csv", type="csv", key='cuentas')
-        st.markdown("- **Nombre esperado:** MovDocCuenta_CSV.csv")
-        st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Histórico cuentas Costo y Gasto")
+# Mostrar información de los autores en la barra lateral
+st.sidebar.markdown("""
+    <div style="margin-top: 20px;">
+        <h4>By</h4>
+        <ul>
+            <li>American Lighting Group</li>
+            <li>Jorge Camacho M.</li>
+        </ul>
+    </div>
+""", unsafe_allow_html=True)
 
-    if st.button('Procesar Archivos'):
-        if dian_file. sinco_file and cuentas_file:
-            dian_path = os.path.join(subfolder, 'DIAN.xlsx')
-            sinco_path = os.path.join(subfolder, 'SINCO.xlsx')
-            cuentas_path = os.path.join(subfolder, 'MovDocCuenta_CSV.csv')
+# Importar y ejecutar el código correspondiente a la pestaña seleccionada
+module = __import__(f"tabs.{tabs[selected_tab]}", fromlist=[None])
+module.run(subfolder)
 
-            with open(dian_path, 'wb') as f:
-                f.write(dian_file.getbuffer())
-            with open(sinco_path, 'wb') as f:
-                f.write(sinco_file.getbuffer())
-            with open(cuentas_path, 'wb') as f:
-                f.write(cuentas_file.getbuffer())
+# Para ejecutar la aplicación usa: streamlit run app.py
 
-            # Crear la barra de progreso
-            progress_bar = st.progress(0)
 
-            try:
-                # Inicia el script en un subproceso
-                process = subprocess.Popen([sys.executable, os.path.join(UPLOAD_FOLDER, "codes_proceso_completo", 'ejecutar_complet.py'), dian_path, sinco_path, cuentas_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-                # Lee el progreso desde el archivo
-                while True:
-                    time.sleep(1)  # Espera un momento antes de verificar el archivo de progreso
-                    if process.poll() is not None:
-                        break  # Sal del bucle si el proceso ha terminado
-                    try:
-                        with open(os.path.join(UPLOAD_FOLDER, "codes_proceso_completo", 'progreso.txt'), 'r') as f:
-                            progress = f.read().strip()
-                            if progress:
-                                progress_bar.progress(int(float(progress)))
-                    except FileNotFoundError:
-                        pass
-
-                # Verificar la salida del proceso
-                stdout, stderr = process.communicate()
-                if process.returncode == 0:
-                    st.success('El script se ejecutó con éxito')
-                    st.text(stdout)
-                else:
-                    st.error(f'Error al ejecutar el script: {stderr}')
-                    st.text(stderr)
-            except Exception as e:
-                st.error(f'Error al ejecutar el script: {str(e)}')
-        else:
-            st.error('Todos los archivos deben ser seleccionados')
-
-elif selected_tab == "Comparar Archivos":
-    st.markdown("## Comparar Archivos")
-    st.markdown("### Subida de Archivos")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        dian_file = st.file_uploader("Sube el archivo DIAN.xlsx", type="xlsx", key='dian')
-        st.markdown("- **Nombre esperado:** DIAN.xlsx")
-        st.markdown("- **Especificación:** Reporte Dian de Documentos Recibidos")
-
-    with col2:
-        sinco_file = st.file_uploader("Sube el archivo SINCO.xlsx", type="xlsx", key='sinco')
-        st.markdown("- **Nombre esperado:** SINCO.xlsx")
-        st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Seleccionando Concepto y Doc del tercero")
-
-    if st.button('Comparar Archivos'):
-        if dian_file and sinco_file:
-            dian_path = os.path.join(subfolder, 'DIAN.xlsx')
-            sinco_path = os.path.join(subfolder, 'SINCO.xlsx')
-
-            with open(dian_path, 'wb') as f:
-                f.write(dian_file.getbuffer())
-            with open(sinco_path, 'wb') as f:
-                f.write(sinco_file.getbuffer())
-
-            # Crear la barra de progreso
-            progress_bar = st.progress(0)
-
-            try:
-                # Inicia el script en un subproceso
-                process = subprocess.Popen([sys.executable, os.path.join(UPLOAD_FOLDER, "codes_proceso_completo", 'ejecutar_comparativ.py'), dian_path, sinco_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-                # Lee el progreso desde el archivo
-                while True:
-                    time.sleep(1)  # Espera un momento antes de verificar el archivo de progreso
-                    if process.poll() is not None:
-                        break  # Sal del bucle si el proceso ha terminado
-                    try:
-                        with open(os.path.join(UPLOAD_FOLDER, "codes_proceso_completo", 'progreso.txt'), 'r') as f:
-                            progress = f.read().strip()
-                            if progress:
-                                progress_bar.progress(int(float(progress)))
-                    except FileNotFoundError:
-                        pass
-
-                # Verificar la salida del proceso
-                stdout, stderr = process.communicate()
-                if process.returncode == 0:
-                    st.success('La comparación se ejecutó con éxito')
-                    st.text(stdout)
-                else:
-                    st.error(f'Error al ejecutar la comparación: {stderr}')
-                    st.text(stderr)
-            except Exception as e:
-                st.error(f'Error al ejecutar la comparación: {str(e)}')
-        else:
-            st.error('Ambos archivos deben ser seleccionados')
-
-elif selected_tab == "Descargar Archivos":
-    st.markdown("## Descargar Archivos")
-    st.markdown("### Subida de Archivos")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        dian_file = st.file_uploader("Sube el archivo DIAN.xlsx", type="xlsx", key='dian')
-        st.markdown("- **Nombre esperado:** DIAN.xlsx")
-        st.markdown("- **Especificación:** Reporte Dian de Documentos Recibidos")
-
-    with col2:
-        sinco_file = st.file_uploader("Sube el archivo SINCO.xlsx", type="xlsx", key='sinco')
-        st.markdown("- **Nombre esperado:** SINCO.xlsx")
-        st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Seleccionando Concepto y Doc del tercero")
-
-    if st.button('Descargar Archivos'):
-        if dian_file and sinco_file:
-            dian_path = os.path.join(subfolder, 'DIAN.xlsx')
-            sinco_path = os.path.join(subfolder, 'SINCO.xlsx')
-
-            with open(dian_path, 'wb') as f:
-                f.write(dian_file.getbuffer())
-            with open(sinco_path, 'wb') as f:
-                f.write(sinco_file.getbuffer())
-
-            # Crear la barra de progreso
-            progress_bar = st.progress(0)
-
-            try:
-                # Inicia el script en un subproceso
-                process = subprocess.Popen([sys.executable, os.path.join(UPLOAD_FOLDER, "codes_proceso_completo", 'ejecutar_downloand.py'), dian_path, sinco_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-                # Lee el progreso desde el archivo
-                while True:
-                    time.sleep(1)  # Espera un momento antes de verificar el archivo de progreso
-                    if process.poll() is not None:
-                        break  # Sal del bucle si el proceso ha terminado
-                    try:
-                        with open(os.path.join(UPLOAD_FOLDER, "codes_proceso_completo", 'progreso.txt'), 'r') as f:
-                            progress = f.read().strip()
-                            if progress:
-                                progress_bar.progress(int(float(progress)))
-                    except FileNotFoundError:
-                        pass
-
-                # Verificar la salida del proceso
-                stdout, stderr = process.communicate()
-                if process.returncode == 0:
-                    st.success('La descarga se ejecutó con éxito')
-                    st.text(stdout)
-                else:
-                    st.error(f'Error al ejecutar la descarga: {stderr}')
-                    st.text(stderr)
-            except Exception as e:
-                st.error(f'Error al ejecutar la descarga: {str(e)}')
-        else:
-            st.error('Ambos archivos deben ser seleccionados')
-
-# streamlit run app.py
