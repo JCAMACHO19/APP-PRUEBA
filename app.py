@@ -51,7 +51,7 @@ st.sidebar.markdown("""
         <h4>By</h4>
         <ul>
             <li>American Lighting Group</li>
-            <li>Jorge Camacho M.</li>
+            <li>JC-ML-MG-YP-DV</li>
         </ul>
     </div>
 """, unsafe_allow_html=True)
