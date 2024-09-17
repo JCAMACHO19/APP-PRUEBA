@@ -160,7 +160,14 @@ for subcarpeta in subcarpetas:
                 # Rellenar mDescripcion, mNit, mBase, mCentroC, mSegmento
                 sheet.write(dest_row, 10, descripcion)  # mDescripcion
                 sheet.write(dest_row, 11, nit_del_emisor)  # mNit
-                sheet.write(dest_row, 12, None)  # mBase
+                
+                # Aquí agregamos la lógica para calcular mBase cuando es IVA
+                if mcuenta_key == 'IVA':
+                    mBase_value = round((value * 100) / 19, 2)
+                    sheet.write(dest_row, 12, mBase_value)  # mBase
+                else:
+                    sheet.write(dest_row, 12, None)  # mBase
+                
                 sheet.write(dest_row, 13, centro_costos_mas_frecuente)  # mCentroC
                 sheet.write(dest_row, 14, None)  # mSegmento
                 
