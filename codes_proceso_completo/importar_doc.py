@@ -45,9 +45,18 @@ for subcarpeta in subcarpetas:
     df_datos['Nit del Emisor:'] = df_datos['Nit del Emisor:'].astype(str)
     df_cuenta_contable['NIT'] = df_cuenta_contable['NIT'].astype(str)
 
-    # Reemplazar NaN en 'Fecha de Vencimiento:' con los valores de 'Fecha de Emisión:'
-    df_datos['Fecha de Vencimiento:'] = df_datos['Fecha de Vencimiento:'].fillna(df_datos['Fecha de Emisión:'])
+    # Asegurarse de que las columnas de fechas están en formato datetime y respetar el formato inicial dd/mm/yyyy
+    df_datos['Fecha de Emisión:'] = pd.to_datetime(df_datos['Fecha de Emisión:'], format='%d/%m/%Y', errors='coerce', dayfirst=True)
+    df_datos['Fecha de Vencimiento:'] = pd.to_datetime(df_datos['Fecha de Vencimiento:'], format='%d/%m/%Y', errors='coerce', dayfirst=True)
 
+    # Reemplazar NaN en 'Fecha de Vencimiento:' con 'Fecha de Emisión:' + 30 días
+    df_datos['Fecha de Vencimiento:'] = df_datos['Fecha de Vencimiento:'].fillna(df_datos['Fecha de Emisión:'] + pd.DateOffset(days=30))
+
+    # Convertir todas las fechas nuevamente al formato 'dd/mm/yyyy' solo si es necesario
+    df_datos['Fecha de Emisión:'] = df_datos['Fecha de Emisión:'].dt.strftime('%d/%m/%Y')
+    df_datos['Fecha de Vencimiento:'] = df_datos['Fecha de Vencimiento:'].dt.strftime('%d/%m/%Y')
+
+    
     # Función para limpiar números de factura eliminando espacios, guiones, comas y puntos
     def clean_number(number):
         return re.sub(r'[\s\-,.]', '', str(number))

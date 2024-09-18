@@ -2,6 +2,7 @@ import os
 import zipfile
 import fitz  # PyMuPDF
 import shutil
+import openpyxl
 
 UPLOAD_FOLDER = os.path.abspath("")
 
@@ -41,6 +42,16 @@ def buscar_variables(documento):
 
     return variables
 
+# Función para aplicar el filtro y la inmovilización de la primera fila en un archivo Excel (.xlsx)
+def aplicar_filtro_y_inmovilizar_xlsx(file_path):
+    workbook = openpyxl.load_workbook(file_path)
+    for sheet in workbook.sheetnames:
+        worksheet = workbook[sheet]
+        if worksheet.max_row > 1 and worksheet.max_column > 1:
+            worksheet.auto_filter.ref = worksheet.dimensions  # Aplicar el filtro a la primera fila
+            worksheet.freeze_panes = worksheet['A2']  # Inmovilizar la primera fila (todo lo anterior a A2)
+    workbook.save(file_path)
+
 # Recorrer todas las subcarpetas en "archivos_usuarios"
 for subfolder in os.listdir(folder_path):
     subfolder_path = os.path.join(folder_path, subfolder)
@@ -69,12 +80,13 @@ for subfolder in os.listdir(folder_path):
                     elif filename.endswith('.pdf'):
                         archivos_pdf.append((file_path, os.path.relpath(file_path, subfolder_path)))
 
-            # Añadir los archivos .xls primero
+            # Procesar archivos .xls sin modificar
             for file_path, arcname in archivos_xls:
                 zipf.write(file_path, arcname)
 
-            # Añadir los archivos .xlsx luego
+            # Procesar archivos .xlsx (aplicar filtro e inmovilizar)
             for file_path, arcname in archivos_xlsx:
+                aplicar_filtro_y_inmovilizar_xlsx(file_path)  # Aplicar el filtro y la inmovilización antes de añadir al ZIP
                 zipf.write(file_path, arcname)
 
             # Añadir los archivos PDF renombrados

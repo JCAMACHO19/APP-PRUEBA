@@ -37,14 +37,27 @@ for subdir, dirs, files in os.walk(base_folder):
             # Si todas las cuentas son especiales, retornar la moda normal
             return grupo['Cuenta Contable'].mode()[0]
 
-        modas = df_filtered.groupby('NIT', group_keys=False).apply(moda_cuenta_contable).reset_index()
-        modas.columns = ['NIT', 'Cuenta Contable Moda']
+        # Dividir en dos grupos: cuentas para "Cuenta Contable Moda" (5 y 7) y "Cuenta por pagar" (22 y 23)
+        df_filtered_contable = df_filtered[df_filtered['Cuenta Contable'].str.startswith(('5', '7'))]
+        df_filtered_pagar = df_filtered[df_filtered['Cuenta Contable'].str.startswith(('22', '23'))]
 
-        # Unir el DataFrame original con el de las modas
-        df = pd.merge(df, modas, on='NIT', how='left')
+        # Calcular las modas de ambos grupos
+        modas_contable = df_filtered_contable.groupby('NIT', group_keys=False, as_index=False).apply(moda_cuenta_contable).reset_index(drop=True)
+        modas_contable.columns = ['NIT', 'Cuenta Contable Moda']
+
+        modas_pagar = df_filtered_pagar.groupby('NIT', group_keys=False, as_index=False).apply(moda_cuenta_contable).reset_index(drop=True)
+        modas_pagar.columns = ['NIT', 'Cuenta por pagar']
+
+        # Unir el DataFrame original con las modas de "Cuenta Contable Moda" y "Cuenta por pagar"
+        df = pd.merge(df, modas_contable, on='NIT', how='left')
+        df = pd.merge(df, modas_pagar, on='NIT', how='left')
+
+        # Rellenar los NaN de "Cuenta por pagar" con la moda general de esa columna
+        moda_general_pagar = df['Cuenta por pagar'].mode()[0]
+        df['Cuenta por pagar'] = df['Cuenta por pagar'].fillna(moda_general_pagar)
 
         # Seleccionar solo las columnas necesarias
-        df = df[['NIT', 'Cuenta Contable Moda', 'Tipo Doc.', 'Centro Costos']]
+        df = df[['NIT', 'Cuenta Contable Moda', 'Cuenta por pagar', 'Tipo Doc.', 'Centro Costos']]
 
         # Eliminar filas duplicadas basadas en la columna "NIT"
         df = df.drop_duplicates(subset='NIT')
@@ -52,8 +65,9 @@ for subdir, dirs, files in os.walk(base_folder):
         # Eliminar filas sin dato en la columna 'Cuenta Contable Moda'
         df = df.dropna(subset=['Cuenta Contable Moda'])
 
-        # Convertir la columna 'Cuenta Contable Moda' a formato texto
+        # Convertir las columnas 'Cuenta Contable Moda' y 'Cuenta por pagar' a formato texto
         df['Cuenta Contable Moda'] = df['Cuenta Contable Moda'].astype(str)
+        df['Cuenta por pagar'] = df['Cuenta por pagar'].astype(str)
 
         # Función para determinar el valor de la columna "IVA"
         def calcular_iva(cuenta):
@@ -72,5 +86,6 @@ for subdir, dirs, files in os.walk(base_folder):
         print(f'El archivo modificado se ha guardado en {output_file_path}')
     else:
         print(f'Archivo MovDocCuenta_CSV.csv no encontrado en {subdir}, omitiendo...')
+
 
 
