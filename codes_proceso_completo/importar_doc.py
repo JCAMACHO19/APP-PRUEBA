@@ -114,21 +114,23 @@ for subcarpeta in subcarpetas:
         
         # Definir los valores para la columna mCuenta
         cuenta_iva = df_cuenta_contable.loc[df_cuenta_contable['NIT'] == nit_del_emisor, 'IVA']
+        cuenta_x_cobrar = df_cuenta_contable.loc[df_cuenta_contable['NIT'] == nit_del_emisor, 'Cuenta por pagar']
         
         mcuenta_values = {
-            'IVA': cuenta_iva.values[0] if not cuenta_iva.empty else '24081001',
-            'Total factura (=)': '23359505',
-            'INC': '51159801',
-            'Fallback': '53959501'  # Valor predeterminado cuando no se encuentra un NIT
+        'IVA': cuenta_iva.values[0] if not cuenta_iva.empty else '24081001',
+        'Total factura (=)': cuenta_x_cobrar.values[0] if not cuenta_x_cobrar.empty else '23359505',
+        'INC': '51159801',
+        'Fallback': '53959501'  # Valor predeterminado cuando no se encuentra un NIT
         }
+    
         
-        # Contar cuántas columnas tienen valores mayores a cero
         columnas_mayores_cero = [
-            (total_bruto_factura, 'mDebito', 'Total Bruto Factura'), 
-            (iva, 'mDebito', 'IVA'), 
-            (inc, 'mDebito', 'INC'), 
-            (total_factura, 'mCredito', 'Total factura (=)')
+        (total_bruto_factura, 'mDebito', 'Total Bruto Factura'), 
+        (iva, 'mDebito', 'IVA'), 
+        (inc, 'mDebito', 'INC'), 
+        (total_factura, 'mCredito', 'Total factura (=)')
         ]
+
         
         # Escribe los datos en el archivo de importación
         sheet.write(dest_row, 0, 'CP')  # dTipoDocumento
@@ -157,7 +159,7 @@ for subcarpeta in subcarpetas:
                 
                 # Rellena mCuenta según el tipo de dato
                 if mcuenta_key and mcuenta_key != 'Total Bruto Factura':
-                    sheet.write(dest_row, 7, mcuenta_values[mcuenta_key])  # mCuenta
+                    sheet.write(dest_row, 7, str(int(mcuenta_values[mcuenta_key])))  # mCuenta
                 elif mcuenta_key == 'Total Bruto Factura':
                     # Busca el valor correspondiente en Cuenta_contable.xlsx
                     cuenta_contable = df_cuenta_contable.loc[df_cuenta_contable['NIT'] == nit_del_emisor, 'Cuenta Contable Moda']
