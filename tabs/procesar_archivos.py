@@ -22,7 +22,7 @@ def run(subfolder):
     with col3:
         cuentas_file = st.file_uploader("Sube el archivo MovDocCuenta_CSV.csv", type="csv", key='cuentas')
         st.markdown("- **Nombre esperado:** MovDocCuenta_CSV.csv")
-        st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Histórico cuentas Costo y Gasto")
+        st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Histórico cuentas Pasivo, Costo y Gasto")
 
     if st.button('Procesar Archivos'):
         if dian_file and sinco_file and cuentas_file:

@@ -14,12 +14,13 @@ def run(subfolder):
     with col1:
         # Permitir que el usuario suba varios archivos de factura (PDFs)
         uploaded_files = st.file_uploader("Cargar facturas (puede seleccionar múltiples archivos)", type="pdf", accept_multiple_files=True)
-    
+        st.markdown("- **Especificación:** Seleccionar facturas electronicas con formato DIAN que te interese contabilizar")
+
     with col2:
         # Permitir que el usuario suba el archivo CSV
         cuentas_file = st.file_uploader("Sube el archivo MovDocCuenta_CSV.csv", type="csv", key='cuentas')
         st.markdown("- **Nombre esperado:** MovDocCuenta_CSV.csv")
-        st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Histórico cuentas Costo y Gasto")
+        st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Histórico cuentas Pasivo, Costo y Gasto")
     
     # Cuando el usuario presione el botón de procesar
     if st.button('Procesar Facturas y CSV'):

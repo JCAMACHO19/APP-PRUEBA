@@ -18,7 +18,7 @@ subfolder = os.path.join(UPLOAD_FOLDER)
 os.makedirs(subfolder, exist_ok=True)
 
 # Ruta de la imagen del título
-title_image_path = os.path.join("imagen", "titulo_app.jpg")
+title_image_path = os.path.join("imagen", "titulo_app.png")
 
 # Verificar si la imagen existe y cargarla con st.image
 if os.path.exists(title_image_path):
