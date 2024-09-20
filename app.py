@@ -41,8 +41,10 @@ tabs = {
     "Inicio": "inicio",
     "Contabilización Masiva": "procesar_archivos",
     "Verificación de Facturas": "comparar_archivos",
-    "Descargas Automáticas": "descargar_archivos"
+    "Descargas Automáticas": "descargar_archivos",
+    "Rellenar formato Sinco": "proceso_sin_descargar"
 }
+
 selected_tab = st.sidebar.selectbox("Seleccione", list(tabs.keys()))
 
 # Mostrar información de los autores en la barra lateral
