@@ -11,18 +11,22 @@ def run(subfolder):
 
     with col1:
         dian_file = st.file_uploader("Sube el archivo DIAN.xlsx", type="xlsx", key='dian')
-        st.markdown("- **Nombre esperado:** DIAN.xlsx")
-        st.markdown("- **Especificación:** Reporte Dian de Documentos Recibidos")
+        st.markdown("- **Nombre reporte:** *Facturas recibidas* - *Reporte Dian*")
+        st.markdown("- **Especificación:** Reporte *Detallado de documentos electronicos recibidos - emitido por la DIAN*")
 
     with col2:
         sinco_file = st.file_uploader("Sube el archivo SINCO.xlsx", type="xlsx", key='sinco')
-        st.markdown("- **Nombre esperado:** SINCO.xlsx")
-        st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Seleccionando Concepto y Doc del tercero")
+        st.markdown("- **Nombre reporte:** *Movimiento por documento y cuenta*")
+        st.markdown("- **Fecha a seleccionar:** *Periodo del reporte DIAN*")
+        st.markdown("- **Especificación:**  Seleccionar *Concepto y Doc del tercero*")
+        st.markdown("- **Seleccion de Cuenta:** Cuentas *Activo 1 - Costo 7*")
 
     with col3:
         cuentas_file = st.file_uploader("Sube el archivo MovDocCuenta_CSV.csv", type="csv", key='cuentas')
-        st.markdown("- **Nombre esperado:** MovDocCuenta_CSV.csv")
-        st.markdown("- **Especificación:** Reporte *Mov por Doc y Cuenta* Histórico cuentas Pasivo, Costo y Gasto")
+        st.markdown("- **Nombre reporte:** *Movimiento por documento y cuenta*")
+        st.markdown("- **Fecha a seleccionar:** *Varios periodos anteriores*")
+        st.markdown("- **Especificación:** *No seleccionar especificaciones*")
+        st.markdown("- **Seleccion de Cuenta:** Cuentas *Pasivo 2 - Costo 7*")
 
     if st.button('Procesar Archivos'):
         if dian_file and sinco_file and cuentas_file:
