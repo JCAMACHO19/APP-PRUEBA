@@ -1,14 +1,13 @@
 import streamlit as st
 import os
 
-# Configurar el tamaño de la página y el diseño
+# Configurar el tamaño de la página y el diseño con imagen personalizada
 st.set_page_config(
-    page_title="Accounting Optimization",
-    page_icon=":bar_chart:",
+    page_title="S I G D O C",
+    page_icon=os.path.join("imagen", "logo_app.png"),  # Aquí colocas la ruta de tu imagen personalizada
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
 # Configurar la carpeta de subida principal
 UPLOAD_FOLDER = os.path.abspath("archivos_usuarios")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -68,20 +67,20 @@ if "logged_in" not in st.session_state:
 
 # Mostrar el formulario de inicio de sesión si no está logueado
 if not st.session_state["logged_in"]:
-    st.sidebar.header("Login")
-    username = st.sidebar.text_input("Username")
-    password = st.sidebar.text_input("Password", type="password")
+    st.sidebar.header("Iniciar Sesion")
+    username = st.sidebar.text_input("Usuario")
+    password = st.sidebar.text_input("Contraseña", type="password")
     
-    if st.sidebar.button("Login"):
+    if st.sidebar.button("Ingersar"):
         # Verificar si el usuario existe y la contraseña es correcta
         if username in credentials:
             if credentials[username] == password:
                 st.session_state["logged_in"] = True
-                st.success("Logged in successfully!")
+                st.success("Iniciaste Sesion con exito!")
             else:
-                st.sidebar.error("Invalid password")
+                st.sidebar.error("Contraseña incorrecta")
         else:
-            st.sidebar.error("Invalid username")
+            st.sidebar.error("Usuario incorrecto")
 
 # Si está logueado, mostrar las opciones
 if st.session_state["logged_in"]:
@@ -134,7 +133,6 @@ if st.session_state["logged_in"]:
     module.run(subfolder)
 else:
     # Si no está logueado, mostrar solo la pestaña de Inicio
-    st.sidebar.header("Bienvenido")
     st.write("Por favor, inicie sesión para acceder al resto de las funcionalidades.")
 
 
