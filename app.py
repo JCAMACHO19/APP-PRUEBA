@@ -3,7 +3,7 @@ import os
 
 # Configurar el tamaño de la página y el diseño con imagen personalizada
 st.set_page_config(
-    page_title="S I G D O C",
+    page_title="BILL IT",
     page_icon=os.path.join("imagen", "logo_app.png"),  # Aquí colocas la ruta de tu imagen personalizada
     layout="wide",
     initial_sidebar_state="expanded"
