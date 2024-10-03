@@ -135,7 +135,7 @@ else:
     # Si no está logueado, mostrar solo la pestaña de Inicio
     st.write("Por favor, inicie sesión para acceder al resto de las funcionalidades.")
 
-
+#Codigo Principal
 # Para ejecutar la aplicación usa: streamlit run app.py
 
 
