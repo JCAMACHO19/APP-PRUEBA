@@ -72,10 +72,7 @@ for subcarpeta in subcarpetas:
     # Fila destino en el archivo de importación
     dest_row = 1  # Comienza desde la segunda fila en el archivo de importación
 
-    # Calcula el valor más frecuente (moda) de la columna 'Centro Costos'
-    centro_costos_mas_frecuente = df_cuenta_contable['Centro Costos'].mode()[0] if not df_cuenta_contable['Centro Costos'].empty else None
-
-    # Itera sobre todas las filas del archivo datos_facturas.xlsx
+        # Itera sobre todas las filas del archivo datos_facturas.xlsx
     for i, row in df_datos.iterrows():
         # Verifica si el tipo de documento es "Nota Crédito"
         tipo_doc = row['Tipo de doc']
@@ -179,11 +176,25 @@ for subcarpeta in subcarpetas:
                 else:
                     sheet.write(dest_row, 12, None)  # mBase
                 
-                sheet.write(dest_row, 13, centro_costos_mas_frecuente)  # mCentroC
-                sheet.write(dest_row, 14, None)  # mSegmento
+                # Primera opción: Buscar en df_cuenta_contable por NIT
+                centro_costo = df_cuenta_contable.loc[df_cuenta_contable['NIT'] == nit_del_emisor, 'Centro Costos']
+
+                # Primera opción: Buscar en df_cuenta_contable por NIT
+                centro_costo = df_cuenta_contable.loc[df_cuenta_contable['NIT'] == nit_del_emisor, 'Centro Costos']
+
+                if not centro_costo.empty:
+                # Si se encuentra un valor de Centro Costos para el NIT, se usa ese valor
+                 sheet.write(dest_row, 13, centro_costo.values[0])  # mCentroC
+                else:
+                # Si no se encuentra, usa el valor más frecuente (moda) de la columna 'Centro Costos'
+                 centro_costos_mas_frecuente = df_cuenta_contable['Centro Costos'].mode()[0] if not df_cuenta_contable['Centro Costos'].empty else None
+                 sheet.write(dest_row, 13, centro_costos_mas_frecuente)  # mCentroC
+
+                 sheet.write(dest_row, 14, None)  # mSegmento
                 
                 dest_row += 1
 
     # Guardar el archivo modificado
     wb.save(file_path_importar_subcarpeta)
     print(f"Procesamiento completado para la subcarpeta: {subcarpeta}")
+
