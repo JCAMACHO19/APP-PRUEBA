@@ -88,9 +88,7 @@ if st.session_state["logged_in"]:
     st.sidebar.header("¿Qué Análisis Requieres?")
     tabs = {
         "Inicio": "inicio",
-        "Contabilización Masiva": "procesar_archivos",
         "Verificación de Facturas": "comparar_archivos",
-        "Descargas Automáticas": "descargar_archivos",
         "Rellenar formato Sinco": "proceso_sin_descargar"
     }
     
