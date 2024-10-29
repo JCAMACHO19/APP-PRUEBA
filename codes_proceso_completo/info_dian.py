@@ -105,6 +105,10 @@ def extraer_tipo_documento(texto):
         return "FACTURA ELECTRÓNICA DE VENTA"
     elif "FACTURA ELECTRÓNICA DE TRANSPORTE" in texto:
         return "FACTURA ELECTRÓNICA DE VENTA"
+    elif "FACTURA DE VENTA DE TALONARIO" in texto:
+        return "FACTURA ELECTRÓNICA DE VENTA"
+    elif "Factura Electrónica AIU" in texto:
+        return "FACTURA ELECTRÓNICA DE VENTA"
     else:
         return "Tipo Desconocido"
 

@@ -8,6 +8,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 # Configurar la carpeta de subida principal
 UPLOAD_FOLDER = os.path.abspath("archivos_usuarios")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -18,12 +19,6 @@ os.makedirs(subfolder, exist_ok=True)
 
 # Ruta de la imagen del título
 title_image_path = os.path.join("imagen", "titulo_app.png")
-
-# Verificar si la imagen existe y cargarla con st.image
-if os.path.exists(title_image_path):
-    st.image(title_image_path, use_column_width=True)
-else:
-    st.error("La imagen del título no se encontró en la ruta especificada.")
 
 # Ruta de la imagen del logo
 logo_image_path = os.path.join("imagen", "logo_american.png")
@@ -71,16 +66,20 @@ if not st.session_state["logged_in"]:
     username = st.sidebar.text_input("Usuario")
     password = st.sidebar.text_input("Contraseña", type="password")
     
-    if st.sidebar.button("Ingersar"):
+    if st.sidebar.button("Ingresar"):
         # Verificar si el usuario existe y la contraseña es correcta
         if username in credentials:
             if credentials[username] == password:
                 st.session_state["logged_in"] = True
-                st.success("Iniciaste Sesion con exito!")
+                st.success("Iniciaste Sesión con éxito!")
             else:
                 st.sidebar.error("Contraseña incorrecta")
         else:
             st.sidebar.error("Usuario incorrecto")
+
+# Mostrar la imagen de título solo si no se ha iniciado sesión
+if not st.session_state["logged_in"] and os.path.exists(title_image_path):
+    st.image(title_image_path, use_column_width=True)
 
 # Si está logueado, mostrar las opciones
 if st.session_state["logged_in"]:
@@ -93,6 +92,10 @@ if st.session_state["logged_in"]:
     }
     
     selected_tab = st.sidebar.selectbox("Seleccione", list(tabs.keys()))
+
+    # Mostrar la imagen de título en todas las pestañas excepto en "Inicio"
+    if selected_tab != "Inicio" and os.path.exists(title_image_path):
+        st.image(title_image_path, use_column_width=True)
     
     # Mostrar información de los autores en la barra lateral
     st.sidebar.markdown("""
@@ -133,7 +136,6 @@ else:
     # Si no está logueado, mostrar solo la pestaña de Inicio
     st.write("Por favor, inicie sesión para acceder al resto de las funcionalidades.")
 
-# Para ejecutar la aplicación usa: streamlit run app.py
-
+#streamlit run app.py
 
 
