@@ -29,8 +29,10 @@ for subcarpeta in subcarpetas:
     df_dian['Prefijo'] = df_dian['Prefijo'].fillna('')
     df_dian['Folio'] = df_dian['Folio'].fillna('')
     df_dian['Documento del Tercero'] = df_dian['Prefijo'].astype(str) + df_dian['Folio'].astype(str)
+    df_dian['Subtotal'] = df_dian['Total'].fillna(0) - df_dian['IVA'].fillna(0) - df_dian['IPC'].fillna(0)
+
     df_dian = df_dian.drop(columns=['Prefijo', 'Folio', 'NIT Receptor', 'Nombre Receptor'])
-    columnas_reordenadas_dian = ['Tipo de documento', 'CUFE/CUDE', 'Documento del Tercero', 'Fecha Emisión', 'Fecha Recepción', 'NIT Emisor', 'Nombre Emisor', 'IVA', 'ICA', 'IPC', 'Total', 'Estado', 'Grupo']
+    columnas_reordenadas_dian = ['Tipo de documento', 'CUFE/CUDE', 'Documento del Tercero', 'Fecha Emisión', 'Fecha Recepción', 'NIT Emisor', 'Nombre Emisor', 'IVA', 'ICA', 'IPC','Subtotal','Total', 'Estado', 'Grupo']
     df_dian = df_dian[columnas_reordenadas_dian]
     nombre_archivo_modificado_dian =  os.path.join(subcarpeta, "5.2. RELACION DIAN_modificado.xlsx")
     df_dian.to_excel(nombre_archivo_modificado_dian, index=False)
