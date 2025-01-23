@@ -17,52 +17,72 @@ def buscar_variables(documento):
         "Total neto factura (=)": None,
         "Total factura (=)": None,
         "IVA": None,
-        "INC": None, 
+        "INC": None,
         "Rete fuente": None
+    }
+
+    # Variables que deben tomar el último valor
+    ultimas_variables = {
+        "Total Bruto Factura",
+        "Total neto factura (=)",
+        "Total factura (=)",
+        "IVA",
+        "INC",
+        "Rete fuente"
     }
 
     # Procesar cada página del documento
     for page_num in range(documento.page_count):
         page = documento.load_page(page_num)
         texto = page.get_text("text")
-
+        
+        # Recorrer cada variable en el texto
         for variable in variables:
-            if variable in texto:
-                # Encontrar la posición de la variable
-                index = texto.find(variable)
-                if index != -1:
-                    # Extraer el valor después de la variable
-                    start_index = index + len(variable)
-                    
-                    if variable in ["Total Bruto Factura", "Total neto factura (=)", "Total factura (=)","IVA","INC","Rete fuente"]:
-                        # Saltar el espacio adicional para estas variables
-                        start_index = texto.find('\n', start_index) + 1
-                        end_index = texto.find('\n', start_index)
-                    else:
-                        end_index = texto.find('\n', start_index)
-                        if end_index == -1:
-                            end_index = None
-                    
-                    valor = texto[start_index:end_index].strip()
-                    
-                    # Manejar valores con espacios adicionales
-                    if variable in ["Total Bruto Factura", "Total neto factura (=)", "Total factura (=)","IVA","INC","Rete fuente"]:
-                        valor = valor.split()[-1]
-                    
-                    variables[variable] = valor
+            # Encontrar todas las posiciones de la variable en el texto
+            posiciones = [i for i in range(len(texto)) if texto.startswith(variable, i)]
 
-        # Ajuste para identificar "IVA" solo si está entre "Total Bruto Factura" y "INC"
-        if variables["Total Bruto Factura"] and variables["INC"]:
-            bruto_index = texto.find("Total Bruto Factura")
-            inc_index = texto.find("INC")
-            iva_index = texto.find("IVA", bruto_index, inc_index)
-            
-            if iva_index != -1:
-                start_index = texto.find('\n', iva_index) + 1
-                end_index = texto.find('\n', start_index)
-                variables["IVA"] = texto[start_index:end_index].strip().split()[-1]
+            if posiciones:
+                # Manejo especial para la variable "IVA"
+                if variable == "IVA":
+                    if len(posiciones) > 1:
+                        # Si hay más de una aparición, tomar la penúltima posición
+                        index = posiciones[-2]
+                    else:
+                        # Si solo hay una aparición, tomar esa
+                        index = posiciones[0]
+                else:
+                    # Elegir posición dependiendo del tipo de variable
+                    if variable in ultimas_variables:
+                        index = posiciones[-1]  # Tomar la última posición
+                    else:
+                        index = posiciones[0]  # Tomar la primera posición
+                
+                # Extraer el valor después de la variable
+                start_index = index + len(variable)
+                if variable in ultimas_variables:
+                    # Saltar el espacio adicional para estas variables
+                    start_index = texto.find('\n', start_index) + 1
+                    end_index = texto.find('\n', start_index)
+                else:
+                    end_index = texto.find('\n', start_index)
+                    if end_index == -1:
+                        end_index = None
+                
+                valor = texto[start_index:end_index].strip()
+                
+                # Manejar valores con espacios adicionales (solo para las últimas variables)
+                if variable in ultimas_variables:
+                    if valor.strip():  # Verificar que no esté vacío
+                        valor = valor.split()[-1]
+                    else:
+                        valor = None  # Asignar valor nulo si está vacío
+                
+                # Asignar el valor encontrado
+                variables[variable] = valor
 
     return variables
+
+
 
 def convertir_a_numero(valor):
     """Convierte un valor a tipo numérico si es posible, manteniendo las comas como separadores decimales"""
